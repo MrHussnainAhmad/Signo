@@ -5,6 +5,8 @@ import {
   handleApiError,
 } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 // GET - Get public reviews for homepage carousel
 export async function GET(request: NextRequest) {
   try {
