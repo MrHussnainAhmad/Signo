@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { APP_NAME } from '@/lib/config';
 import { Avatar } from '@/components/ui/Avatar';
-import { Dropdown, DropdownItem, DropdownDivider } from '@/components/ui/Dropdown';
+import { Dropdown, DropdownItem } from '@/components/ui/Dropdown';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PageLoader } from '@/components/ui/Spinner';
 
@@ -70,10 +71,12 @@ export function ClientLayout({ children, workspace }: ClientLayoutProps) {
               {/* Workspace Logo/Name */}
               <div className="flex items-center gap-3">
                 {workspace?.logoUrl ? (
-                  <img
+                  <Image
                     src={workspace.logoUrl}
                     alt={workspace.name}
-                    className="w-8 h-8 rounded-lg object-cover"
+                    width={32}
+                    height={32}
+                    className="rounded-lg object-cover"
                   />
                 ) : (
                   <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -163,10 +166,12 @@ export function ClientAuthLayout({ children, workspace }: ClientAuthLayoutProps)
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             {workspace?.logoUrl ? (
-              <img
+              <Image
                 src={workspace.logoUrl}
                 alt={workspace.name}
-                className="w-12 h-12 rounded-xl object-cover"
+                width={48}
+                height={48}
+                className="rounded-xl object-cover"
               />
             ) : (
               <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center">

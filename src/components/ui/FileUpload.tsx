@@ -6,7 +6,7 @@ import { Spinner } from './Spinner';
 interface FileUploadProps {
   onUpload: (file: File) => Promise<void>;
   accept?: string;
-  maxSize?: number; // in bytes
+  maxSize?: number;
   label?: string;
   hint?: string;
   disabled?: boolean;
@@ -16,7 +16,7 @@ interface FileUploadProps {
 export function FileUpload({
   onUpload,
   accept = '*',
-  maxSize = 100 * 1024 * 1024, // 100MB default
+  maxSize = 100 * 1024 * 1024,
   label = 'Upload a file',
   hint,
   disabled = false,
@@ -35,7 +35,7 @@ export function FileUpload({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const validateFile = (file: File): string | null => {
+  const validateFile = useCallback((file: File): string | null => {
     if (file.size > maxSize) {
       return `File too large. Maximum size is ${formatFileSize(maxSize)}`;
     }
@@ -61,7 +61,7 @@ export function FileUpload({
     }
 
     return null;
-  };
+  }, [accept, maxSize]);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -82,7 +82,7 @@ export function FileUpload({
         setIsUploading(false);
       }
     },
-    [onUpload, maxSize, accept]
+    [onUpload, validateFile]
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,7 +90,6 @@ export function FileUpload({
     if (file) {
       handleFile(file);
     }
-    // Reset input
     if (inputRef.current) {
       inputRef.current.value = '';
     }
@@ -217,7 +216,6 @@ export function MultiFileUpload({
       return;
     }
 
-    // Validate each file
     for (const file of fileArray) {
       if (file.size > maxSize) {
         setError(`${file.name} is too large`);
@@ -233,7 +231,6 @@ export function MultiFileUpload({
       await onUpload(fileArray);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
-      // Remove failed files
       setFiles(files);
     } finally {
       setIsUploading(false);

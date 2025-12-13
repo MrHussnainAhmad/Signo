@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { APP_NAME } from '@/lib/config';
 import { Button } from '@/components/ui/Button';
 
@@ -12,7 +11,6 @@ interface NavbarProps {
 
 export function Navbar({ isAuthenticated = false }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const pathname = usePathname();
 
   const navLinks = [
     { href: '/#features', label: 'Features' },

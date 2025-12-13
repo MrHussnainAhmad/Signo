@@ -1,4 +1,4 @@
-import { APP_NAME, config } from '@/lib/config';
+import { APP_NAME } from '@/lib/config';
 
 // Signo Brand Colors
 const BRAND = {

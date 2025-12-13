@@ -59,9 +59,9 @@ export const config = {
     secretKey: process.env.STRIPE_SECRET_KEY!,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
     prices: {
-      solo: process.env.STRIPE_SOLO_PRICE_ID!,
-      studio: process.env.STRIPE_STUDIO_PRICE_ID!,
-      upgrade: process.env.STRIPE_UPGRADE_PRICE_ID!,
+      solo: process.env.STRIPE_SOLO_PRICE_ID || '',
+      studio: process.env.STRIPE_STUDIO_PRICE_ID || '',
+      upgrade: process.env.STRIPE_UPGRADE_PRICE_ID || '',
     },
   },
   
@@ -75,7 +75,7 @@ export const config = {
   // Google Drive
   googleDrive: {
     serviceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!,
-    privateKey: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n')!,
+    privateKey: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
     folderId: process.env.GOOGLE_DRIVE_FOLDER_ID!,
   },
 } as const;

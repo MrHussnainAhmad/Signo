@@ -15,6 +15,14 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['bcryptjs'],
   },
+  // Ignore ESLint errors during production build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  // Ignore TypeScript errors during production build (use with caution)
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;

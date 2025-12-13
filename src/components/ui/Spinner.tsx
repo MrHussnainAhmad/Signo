@@ -18,10 +18,10 @@ const sizeStyles: Record<SpinnerSize, string> = {
   xl: 'w-12 h-12',
 };
 
-const colorStyles: Record<string, string> = {
-  primary: 'border-indigo-600',
-  white: 'border-white',
-  gray: 'border-gray-600',
+const colorMap: Record<string, string> = {
+  primary: '#6366f1',
+  white: '#ffffff',
+  gray: '#4b5563',
 };
 
 export function Spinner({ size = 'md', className = '', color = 'primary' }: SpinnerProps) {
@@ -33,7 +33,7 @@ export function Spinner({ size = 'md', className = '', color = 'primary' }: Spin
         ${className}
       `}
       style={{
-        borderTopColor: color === 'primary' ? '#6366f1' : color === 'white' ? '#ffffff' : '#4b5563',
+        borderTopColor: colorMap[color],
       }}
       role="status"
       aria-label="Loading"
