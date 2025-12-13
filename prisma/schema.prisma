@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  email             String    @unique
+  password          String
+  avatarUrl         String?
+  emailVerified     Boolean   @default(false)
+  verificationToken String?
+  verificationExpiry DateTime?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  workspaces        WorkspaceMember[]
+  ownedWorkspaces   Workspace[]       @relation("WorkspaceOwner")
+  comments          Comment[]
+  reviews           Review[]
+}
+
+model Workspace {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  plan      Plan     @default(UNPAID)
+  logoUrl   String?
+  ownerId   String   @db.ObjectId
+  owner     User     @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   WorkspaceMember[]
+  purchases Purchase[]
+  projects  Project[]
+  invites   WorkspaceInvite[]
+
+  @@index([ownerId])
+}
+
+model WorkspaceMember {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  workspaceId String   @db.ObjectId
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        Role     @default(MEMBER)
+  createdAt   DateTime @default(now())
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model WorkspaceInvite {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  workspaceId String   @db.ObjectId
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  email       String
+  tokenHash   String
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
+  @@index([email])
+  @@index([tokenHash])
+}
+
+model Purchase {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  workspaceId     String   @db.ObjectId
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  stripeSessionId String   @unique
+  stripePaymentId String?
+  type            PurchaseType
+  amount          Int
+  tax             Int
+  currency        String   @default("usd")
+  status          PaymentStatus @default(PENDING)
+  createdAt       DateTime @default(now())
+
+  @@index([workspaceId])
+}
+
+model Project {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  workspaceId String   @db.ObjectId
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title       String
+  clientName  String
+  clientEmail String
+  status      ProjectStatus @default(WAITING_FOR_CLIENT)
+  shareToken  String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  deliverables   Deliverable[]
+  comments       Comment[]
+  approvalEvents ApprovalEvent[]
+  review         Review?
+
+  @@index([workspaceId])
+  @@index([clientEmail])
+}
+
+model Deliverable {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  projectId     String   @db.ObjectId
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  driveFileId   String
+  webViewLink   String
+  downloadLink  String?
+  fileName      String
+  mimeType      String
+  fileSize      Int?
+  versionNumber Int      @default(1)
+  createdAt     DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model Comment {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  projectId   String     @db.ObjectId
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorType  AuthorType
+  authorId    String?    @db.ObjectId
+  author      User?      @relation(fields: [authorId], references: [id])
+  authorEmail String
+  authorName  String
+  body        String
+  createdAt   DateTime   @default(now())
+
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model ApprovalEvent {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  projectId   String   @db.ObjectId
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  eventType   ApprovalEventType
+  clientEmail String
+  clientName  String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model Review {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  projectId   String   @unique @db.ObjectId
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorId    String?  @db.ObjectId
+  author      User?    @relation(fields: [authorId], references: [id])
+  authorName  String
+  authorEmail String
+  rating      Int
+  text        String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model ClientAccount {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  email         String   @unique
+  name          String
+  password      String
+  emailVerified Boolean  @default(false)
+  verificationToken String?
+  verificationExpiry DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum Plan {
+  UNPAID
+  SOLO
+  STUDIO
+}
+
+enum Role {
+  OWNER
+  MEMBER
+}
+
+enum PurchaseType {
+  SOLO
+  STUDIO
+  UPGRADE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum ProjectStatus {
+  WAITING_FOR_CLIENT
+  CHANGES_REQUESTED
+  APPROVED
+}
+
+enum AuthorType {
+  CLIENT
+  TEAM
+}
+
+enum ApprovalEventType {
+  APPROVED
+  CHANGES_REQUESTED
+}
