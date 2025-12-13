@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ClientAuthLayout } from '@/components/layout/ClientLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Spinner } from '@/components/ui/Spinner';
 
-export default function ClientLoginPage() {
+function ClientLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/p';
@@ -48,7 +49,7 @@ export default function ClientLoginPage() {
       }
 
       router.push(redirect);
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -99,7 +100,7 @@ export default function ClientLoginPage() {
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-600">
-        Don't have an account?{' '}
+        Don&apos;t have an account?{' '}
         <Link
           href={`/p/signup?redirect=${encodeURIComponent(redirect)}&email=${encodeURIComponent(prefillEmail)}`}
           className="text-indigo-600 hover:text-indigo-700 font-medium"
@@ -108,5 +109,17 @@ export default function ClientLoginPage() {
         </Link>
       </p>
     </ClientAuthLayout>
+  );
+}
+
+export default function ClientLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    }>
+      <ClientLoginForm />
+    </Suspense>
   );
 }

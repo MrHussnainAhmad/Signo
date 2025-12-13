@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { AuthLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Spinner } from '@/components/ui/Spinner';
 
-export default function SignupPage() {
-  const router = useRouter();
+function SignupForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -54,7 +53,7 @@ export default function SignupPage() {
       }
 
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setErrors({ general: 'An error occurred. Please try again.' });
     } finally {
       setIsLoading(false);
@@ -65,7 +64,7 @@ export default function SignupPage() {
     return (
       <AuthLayout
         title="Check your email"
-        subtitle="We've sent you a verification link"
+        subtitle="We have sent you a verification link"
       >
         <div className="text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -84,15 +83,14 @@ export default function SignupPage() {
             </svg>
           </div>
           <p className="text-gray-600 mb-6">
-            We've sent a verification email to{' '}
+            We have sent a verification email to{' '}
             <strong className="text-gray-900">{formData.email}</strong>. 
             Please click the link in the email to verify your account.
           </p>
           <p className="text-sm text-gray-500">
-            Didn't receive the email?{' '}
+            Didn&apos;t receive the email?{' '}
             <button
               onClick={() => {
-                // Resend verification logic
                 fetch('/api/auth/resend-verification', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -192,5 +190,17 @@ export default function SignupPage() {
         </Link>
       </p>
     </AuthLayout>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }

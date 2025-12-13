@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { AuthLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const token = searchParams.get('token');
 
   const [isValidating, setIsValidating] = useState(true);
@@ -40,7 +39,7 @@ export default function ResetPasswordPage() {
         } else {
           setError(data.error || 'Invalid or expired reset link');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to validate reset link');
       } finally {
         setIsValidating(false);
@@ -76,7 +75,7 @@ export default function ResetPasswordPage() {
       }
 
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -213,5 +212,17 @@ export default function ResetPasswordPage() {
         </Link>
       </p>
     </AuthLayout>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

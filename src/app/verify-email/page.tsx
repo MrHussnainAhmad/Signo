@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AuthLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const token = searchParams.get('token');
 
   const [status, setStatus] = useState<'loading' | 'success' | 'already_verified' | 'error'>('loading');
@@ -30,11 +29,9 @@ export default function VerifyEmailPage() {
           setStatus('success');
           setMessage(data.data.message);
         } else {
-          // Check if it's an "already verified" or "invalid token" situation
           const errorMessage = data.error || 'Verification failed';
           
           if (errorMessage.includes('Invalid') || errorMessage.includes('expired')) {
-            // Could be already verified or truly invalid
             setStatus('already_verified');
             setMessage('This verification link has already been used or has expired. If you already verified your email, you can log in now.');
           } else {
@@ -42,7 +39,7 @@ export default function VerifyEmailPage() {
             setMessage(errorMessage);
           }
         }
-      } catch (error) {
+      } catch {
         setStatus('error');
         setMessage('An error occurred during verification.');
       }
@@ -152,5 +149,17 @@ export default function VerifyEmailPage() {
         </div>
       </div>
     </AuthLayout>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

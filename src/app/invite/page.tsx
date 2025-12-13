@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AuthLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/Button';
@@ -15,7 +15,7 @@ interface InviteData {
   userExists: boolean;
 }
 
-export default function InvitePage() {
+function InviteContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -48,7 +48,7 @@ export default function InvitePage() {
         } else {
           setError(data.error || 'Invalid or expired invite link');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to validate invite');
       } finally {
         setIsValidating(false);
@@ -97,9 +97,8 @@ export default function InvitePage() {
         return;
       }
 
-      // Redirect to dashboard
       router.push('/app');
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -117,7 +116,7 @@ export default function InvitePage() {
     );
   }
 
-  if (error) {
+  if (error && !inviteData) {
     return (
       <AuthLayout title="Invalid Invite" subtitle="This invitation is not valid">
         <div className="text-center">
@@ -147,11 +146,10 @@ export default function InvitePage() {
 
   if (!inviteData) return null;
 
-  // If user already exists, show login prompt
   if (inviteData.userExists) {
     return (
       <AuthLayout
-        title="You're Invited!"
+        title="You are Invited!"
         subtitle={`${inviteData.inviterName} invited you to join ${inviteData.workspaceName}`}
       >
         <div className="text-center">
@@ -184,12 +182,12 @@ export default function InvitePage() {
 
   return (
     <AuthLayout
-      title="You're Invited!"
+      title="You are Invited!"
       subtitle={`${inviteData.inviterName} invited you to join ${inviteData.workspaceName}`}
     >
       <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
         <p className="text-sm text-indigo-700">
-          You'll be joining as <strong>{inviteData.email}</strong>
+          You will be joining as <strong>{inviteData.email}</strong>
         </p>
       </div>
 
@@ -221,5 +219,17 @@ export default function InvitePage() {
         </Button>
       </form>
     </AuthLayout>
+  );
+}
+
+export default function InvitePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    }>
+      <InviteContent />
+    </Suspense>
   );
 }

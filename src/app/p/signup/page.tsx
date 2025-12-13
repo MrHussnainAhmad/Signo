@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ClientAuthLayout } from '@/components/layout/ClientLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Spinner } from '@/components/ui/Spinner';
 
-export default function ClientSignupPage() {
+function ClientSignupForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/p';
   const prefillEmail = searchParams.get('email') || '';
@@ -57,7 +58,7 @@ export default function ClientSignupPage() {
       }
 
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setErrors({ general: 'An error occurred. Please try again.' });
     } finally {
       setIsLoading(false);
@@ -85,7 +86,7 @@ export default function ClientSignupPage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h1>
           <p className="text-gray-600 mb-6">
-            We've sent a verification link to <strong>{formData.email}</strong>.
+            We have sent a verification link to <strong>{formData.email}</strong>.
             Please verify your email to access your projects.
           </p>
         </div>
@@ -159,5 +160,17 @@ export default function ClientSignupPage() {
         </Link>
       </p>
     </ClientAuthLayout>
+  );
+}
+
+export default function ClientSignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    }>
+      <ClientSignupForm />
+    </Suspense>
   );
 }

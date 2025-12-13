@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ClientAuthLayout } from '@/components/layout/ClientLayout';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 
-export default function ClientVerifyEmailPage() {
+function ClientVerifyEmailContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const token = searchParams.get('token');
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -37,7 +36,7 @@ export default function ClientVerifyEmailPage() {
           setStatus('error');
           setMessage(data.error || 'Verification failed');
         }
-      } catch (error) {
+      } catch {
         setStatus('error');
         setMessage('An error occurred during verification.');
       }
@@ -111,5 +110,17 @@ export default function ClientVerifyEmailPage() {
         </Button>
       </div>
     </ClientAuthLayout>
+  );
+}
+
+export default function ClientVerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    }>
+      <ClientVerifyEmailContent />
+    </Suspense>
   );
 }
