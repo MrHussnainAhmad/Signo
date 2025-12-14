@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { hashPassword } from '@/lib/password';
-import { hashToken, verifyTokenHash } from '@/lib/tokens';
+import { hashToken } from '@/lib/tokens';
 import { acceptInviteSchema } from '@/lib/validation';
 import { createSession } from '@/lib/session';
 import { sendEmail } from '@/lib/email/transporter';
@@ -13,6 +13,114 @@ import {
   validateBody,
 } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
+
+// GET - Validate invite token
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const token = searchParams.get('token');
+
+    if (!token) {
+      return errorResponse('Invite token is required', 400);
+    }
+
+    // Hash the token to find the invite
+    const tokenHash = hashToken(token);
+    
+    console.log('🔍 Looking for invite...');
+    console.log('Token (first 20 chars):', token.substring(0, 20) + '...');
+    console.log('TokenHash:', tokenHash);
+
+    // First, find ANY invite with this hash (ignore expiry/used for debugging)
+    const anyInvite = await db.workspaceInvite.findFirst({
+      where: { tokenHash: tokenHash },
+    });
+
+    if (!anyInvite) {
+      // Let's check how many invites exist total
+      const totalInvites = await db.workspaceInvite.count();
+      console.log('❌ No invite found with this hash. Total invites in DB:', totalInvites);
+      
+      // List all recent invites for debugging (remove in production)
+      const recentInvites = await db.workspaceInvite.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: { 
+          id: true, 
+          email: true, 
+          tokenHash: true,
+          createdAt: true,
+          expiresAt: true,
+          usedAt: true 
+        },
+      });
+      console.log('Recent invites:', JSON.stringify(recentInvites, null, 2));
+      
+      return errorResponse(
+        'Invite not found. The link may be incorrect or the invite was deleted.',
+        400
+      );
+    }
+
+    console.log('✅ Found invite:', anyInvite.id);
+    console.log('   Email:', anyInvite.email);
+    console.log('   Expires:', anyInvite.expiresAt);
+    console.log('   Used:', anyInvite.usedAt);
+
+    // Check if already used
+    if (anyInvite.usedAt) {
+      return errorResponse('This invite has already been used.', 400);
+    }
+
+    // Check if expired
+    if (anyInvite.expiresAt < new Date()) {
+      return errorResponse(
+        `This invite expired on ${anyInvite.expiresAt.toISOString()}. Please ask for a new invitation.`,
+        400
+      );
+    }
+
+    // Get workspace details
+    const invite = await db.workspaceInvite.findFirst({
+      where: {
+        id: anyInvite.id,
+      },
+      include: {
+        workspace: {
+          select: {
+            name: true,
+            owner: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!invite) {
+      return errorResponse('Invite workspace not found', 400);
+    }
+
+    // Check if user already exists
+    const existingUser = await db.user.findUnique({
+      where: { email: invite.email },
+    });
+
+    return successResponse({
+      valid: true,
+      email: invite.email,
+      workspaceName: invite.workspace.name,
+      inviterName: invite.workspace.owner.name,
+      expiresAt: invite.expiresAt,
+      userExists: !!existingUser,
+    });
+  } catch (error) {
+    console.error('❌ Error in GET /api/invites/accept:', error);
+    return handleApiError(error);
+  }
+}
 
 // POST - Accept invite and create account
 export async function POST(request: NextRequest) {
@@ -55,11 +163,6 @@ export async function POST(request: NextRequest) {
         'Invalid or expired invite link. Please ask for a new invitation.',
         400
       );
-    }
-
-    // Verify token hash matches
-    if (!verifyTokenHash(token, invite.tokenHash)) {
-      return errorResponse('Invalid invite token', 400);
     }
 
     // Check if user already exists with this email
@@ -109,7 +212,7 @@ export async function POST(request: NextRequest) {
           name,
           email: invite.email,
           password: hashedPassword,
-          emailVerified: true, // Verified via invite link
+          emailVerified: true,
           workspaces: {
             create: {
               workspaceId: invite.workspaceId,
@@ -161,70 +264,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    return handleApiError(error);
-  }
-}
-
-// GET - Validate invite token
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const token = searchParams.get('token');
-
-    if (!token) {
-      return errorResponse('Invite token is required', 400);
-    }
-
-    // Hash the token to find the invite
-    const tokenHash = hashToken(token);
-
-    // Find valid invite
-    const invite = await db.workspaceInvite.findFirst({
-      where: {
-        tokenHash: tokenHash,
-        usedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-      include: {
-        workspace: {
-          select: {
-            name: true,
-            owner: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!invite) {
-      return errorResponse(
-        'Invalid or expired invite link. Please ask for a new invitation.',
-        400
-      );
-    }
-
-    // Verify token hash
-    if (!verifyTokenHash(token, invite.tokenHash)) {
-      return errorResponse('Invalid invite token', 400);
-    }
-
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email: invite.email },
-    });
-
-    return successResponse({
-      valid: true,
-      email: invite.email,
-      workspaceName: invite.workspace.name,
-      inviterName: invite.workspace.owner.name,
-      expiresAt: invite.expiresAt,
-      userExists: !!existingUser,
-    });
-  } catch (error) {
+    console.error('❌ Error in POST /api/invites/accept:', error);
     return handleApiError(error);
   }
 }
