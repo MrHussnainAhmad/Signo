@@ -74,9 +74,9 @@ export const config = {
 
   // Google Drive
   googleDrive: {
-    serviceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!,
+    serviceAccountEmail: process.env.GOOGLE_CLIENT_EMAIL!,
     privateKey: (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
-    folderId: process.env.GOOGLE_DRIVE_FOLDER_ID!,
+    folderId: process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!,
   },
 } as const;
 
