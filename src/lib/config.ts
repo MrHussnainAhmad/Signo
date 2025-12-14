@@ -72,11 +72,16 @@ export const config = {
     apiSecret: process.env.CLOUDINARY_API_SECRET!,
   },
 
-  // Google Drive
+  // Google Drive (OAuth-based; uses your personal Drive quota)
   googleDrive: {
-    serviceAccountEmail: process.env.GOOGLE_CLIENT_EMAIL!,
-    privateKey: (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
     folderId: process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!,
+  },
+
+  googleDriveOAuth: {
+    clientId: process.env.GOOGLE_OAUTH_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET!,
+    redirectUri: process.env.GOOGLE_OAUTH_REDIRECT_URI!,
+    refreshToken: process.env.GOOGLE_OAUTH_REFRESH_TOKEN!,
   },
 } as const;
 
