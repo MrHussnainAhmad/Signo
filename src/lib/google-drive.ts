@@ -4,12 +4,24 @@ import { Readable } from 'stream';
 
 // Initialize Google Drive API client
 function getGoogleDriveClient() {
+  const clientEmail = config.googleDrive.serviceAccountEmail;
+  const privateKey = config.googleDrive.privateKey;
+  
+  console.log('🔑 Google Drive Auth Debug:');
+  console.log('   Client Email:', clientEmail ? clientEmail.substring(0, 20) + '...' : 'MISSING');
+  console.log('   Private Key:', privateKey ? `Present (${privateKey.length} chars)` : 'MISSING');
+  console.log('   Folder ID:', config.googleDrive.folderId || 'MISSING');
+  
+  if (!clientEmail || !privateKey) {
+    throw new Error('Google Drive credentials are missing. Check GOOGLE_CLIENT_EMAIL and GOOGLE_PRIVATE_KEY env vars.');
+  }
+
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: config.googleDrive.serviceAccountEmail,
-      private_key: config.googleDrive.privateKey,
+      client_email: clientEmail,
+      private_key: privateKey,
     },
-    scopes: ['https://www.googleapis.com/auth/drive'],
+    scopes: ['https://www.googleapis.com/auth/drive.file'],
   });
 
   return google.drive({ version: 'v3', auth });
@@ -42,13 +54,25 @@ function bufferToStream(buffer: Buffer): Readable {
 // Upload file to Google Drive
 export async function uploadToGoogleDrive(params: UploadFileParams): Promise<UploadedFile> {
   const { fileName, mimeType, buffer, projectId } = params;
-  const drive = getGoogleDriveClient();
+  
+  console.log('📤 Starting Google Drive upload:', fileName);
+  
+  let drive;
+  try {
+    drive = getGoogleDriveClient();
+  } catch (authError: any) {
+    console.error('❌ Google Auth Error:', authError.message);
+    throw new Error(`Google Drive authentication failed: ${authError.message}`);
+  }
 
   try {
     // Create a subfolder for the project if it doesn't exist
+    console.log('📁 Getting/creating project folder...');
     const projectFolderId = await getOrCreateProjectFolder(drive, projectId);
+    console.log('📁 Project folder ID:', projectFolderId);
 
     // Upload the file
+    console.log('⬆️ Uploading file to Google Drive...');
     const response = await drive.files.create({
       requestBody: {
         name: fileName,
@@ -63,12 +87,14 @@ export async function uploadToGoogleDrive(params: UploadFileParams): Promise<Upl
     });
 
     const file = response.data;
+    console.log('✅ File uploaded, ID:', file.id);
 
     if (!file.id) {
-      throw new Error('Failed to upload file to Google Drive');
+      throw new Error('Failed to upload file to Google Drive - no file ID returned');
     }
 
     // Make the file viewable by anyone with the link
+    console.log('🔓 Setting file permissions...');
     await drive.permissions.create({
       fileId: file.id,
       requestBody: {
@@ -83,6 +109,8 @@ export async function uploadToGoogleDrive(params: UploadFileParams): Promise<Upl
       fields: 'id, webViewLink, webContentLink, name, mimeType, size',
     });
 
+    console.log('✅ Upload complete:', updatedFile.data.webViewLink);
+
     return {
       driveFileId: updatedFile.data.id!,
       webViewLink: updatedFile.data.webViewLink || '',
@@ -92,9 +120,20 @@ export async function uploadToGoogleDrive(params: UploadFileParams): Promise<Upl
       fileSize: parseInt(updatedFile.data.size || '0', 10),
     };
   } catch (error: any) {
-    console.error('Google Drive upload error details:', JSON.stringify(error, null, 2));
-    // Throw the specific error message to be caught by the API route
-    throw new Error(error.message || 'Failed to upload file to Google Drive');
+    console.error('❌ Google Drive upload error:', error.message);
+    
+    // Parse Google API error
+    if (error.code === 403) {
+      throw new Error('Google Drive permission denied. Make sure the folder is shared with the service account.');
+    }
+    if (error.code === 404) {
+      throw new Error('Google Drive folder not found. Check GOOGLE_DRIVE_ROOT_FOLDER_ID.');
+    }
+    if (error.message?.includes('invalid_grant')) {
+      throw new Error('Google Drive authentication failed. Check your service account credentials.');
+    }
+    
+    throw new Error(`Google Drive upload failed: ${error.message}`);
   }
 }
 
@@ -104,11 +143,16 @@ async function getOrCreateProjectFolder(
   projectId: string
 ): Promise<string> {
   const folderName = `project_${projectId}`;
+  const rootFolderId = config.googleDrive.folderId;
+
+  if (!rootFolderId) {
+    throw new Error('GOOGLE_DRIVE_ROOT_FOLDER_ID is not configured');
+  }
 
   try {
     // Check if folder already exists
     const existingFolder = await drive.files.list({
-      q: `name='${folderName}' and '${config.googleDrive.folderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      q: `name='${folderName}' and '${rootFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
       fields: 'files(id)',
     });
 
@@ -117,20 +161,29 @@ async function getOrCreateProjectFolder(
     }
 
     // Create new folder
+    console.log('📁 Creating new project folder:', folderName);
     const newFolder = await drive.files.create({
       requestBody: {
         name: folderName,
         mimeType: 'application/vnd.google-apps.folder',
-        parents: [config.googleDrive.folderId],
+        parents: [rootFolderId],
       },
       fields: 'id',
     });
 
-    return newFolder.data.id!;
-  } catch (error) {
-    console.error('Error creating project folder:', error);
-    // Fall back to root folder if subfolder creation fails
-    return config.googleDrive.folderId;
+    if (!newFolder.data.id) {
+      throw new Error('Failed to create project folder');
+    }
+
+    return newFolder.data.id;
+  } catch (error: any) {
+    console.error('❌ Error with project folder:', error.message);
+    
+    if (error.code === 404) {
+      throw new Error(`Root folder not found. Share the folder with your service account email.`);
+    }
+    
+    throw error;
   }
 }
 
@@ -168,7 +221,6 @@ export async function getFileMetadata(driveFileId: string) {
 
 // Generate a preview/thumbnail URL for supported file types
 export function getPreviewUrl(driveFileId: string, mimeType: string): string | null {
-  // Google Drive preview URL format
   const previewableTypes = [
     'image/',
     'application/pdf',
@@ -193,13 +245,7 @@ export function getThumbnailUrl(driveFileId: string): string {
 // Validate file type
 export function isAllowedFileType(mimeType: string): boolean {
   const allowedTypes = [
-    // Images
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'image/svg+xml',
-    // Documents
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -207,27 +253,15 @@ export function isAllowedFileType(mimeType: string): boolean {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/vnd.ms-powerpoint',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    // Design files
-    'application/zip',
-    'application/x-zip-compressed',
-    // Video
-    'video/mp4',
-    'video/quicktime',
-    'video/webm',
-    // Audio
-    'audio/mpeg',
-    'audio/wav',
-    'audio/ogg',
-    // Text
-    'text/plain',
-    'text/csv',
-    'application/json',
+    'application/zip', 'application/x-zip-compressed',
+    'video/mp4', 'video/quicktime', 'video/webm',
+    'audio/mpeg', 'audio/wav', 'audio/ogg',
+    'text/plain', 'text/csv', 'application/json',
   ];
 
   return allowedTypes.includes(mimeType);
 }
 
-// Max file size (100MB)
 export const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 export function isFileSizeAllowed(size: number): boolean {
