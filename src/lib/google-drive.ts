@@ -91,9 +91,10 @@ export async function uploadToGoogleDrive(params: UploadFileParams): Promise<Upl
       mimeType: updatedFile.data.mimeType || mimeType,
       fileSize: parseInt(updatedFile.data.size || '0', 10),
     };
-  } catch (error) {
-    console.error('Google Drive upload error:', error);
-    throw new Error('Failed to upload file to Google Drive');
+  } catch (error: any) {
+    console.error('Google Drive upload error details:', JSON.stringify(error, null, 2));
+    // Throw the specific error message to be caught by the API route
+    throw new Error(error.message || 'Failed to upload file to Google Drive');
   }
 }
 
