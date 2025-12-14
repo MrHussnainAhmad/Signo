@@ -2,7 +2,7 @@ export const APP_NAME = "Signo";
 
 export const config = {
   appName: APP_NAME,
-  appUrl: process.env.APP_URL || 'https://signo-hypo.vercel.app/',
+  appUrl: process.env.APP_URL || 'https://signo-hypo.vercel.app',
   
   // Session
   sessionCookieName: process.env.SESSION_COOKIE_NAME || 'signo_session',
