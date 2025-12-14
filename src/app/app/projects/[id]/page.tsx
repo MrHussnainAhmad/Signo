@@ -1,18 +1,35 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+
 import { PageHeader } from '@/components/layout/AppLayout';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
-import { Input, Textarea } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Input';
 import { FileUpload } from '@/components/ui/FileUpload';
-import { Modal, ConfirmModal } from '@/components/ui/Modal';
+import { ConfirmModal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
-import { PageLoader, Skeleton } from '@/components/ui/Spinner';
+import { PageLoader } from '@/components/ui/Spinner';
 import { StarDisplay } from '@/components/ui/StarRating';
+
+import {
+  Copy,
+  ExternalLink,
+  Eye,
+  Download,
+  Trash2,
+  Files,
+  MessageSquareText,
+  CalendarDays,
+  Mail,
+  UserRound,
+  SendHorizonal,
+  ShieldAlert,
+} from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -53,6 +70,19 @@ interface Project {
   } | null;
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+}
+
+function fileKindIcon(mimeType: string) {
+  // keep it simple and reliable
+  return <Files className="h-5 w-5 text-gray-700" aria-hidden="true" />;
+}
+
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -61,17 +91,21 @@ export default function ProjectDetailPage() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   async function fetchProject() {
     try {
+      // backend unchanged
       const response = await fetch(`/api/projects/${projectId}`);
       const data = await response.json();
 
@@ -81,7 +115,7 @@ export default function ProjectDetailPage() {
         showError('Error', 'Project not found');
         router.push('/app/projects');
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to load project');
     } finally {
       setIsLoading(false);
@@ -92,6 +126,7 @@ export default function ProjectDetailPage() {
     const formData = new FormData();
     formData.append('file', file);
 
+    // backend unchanged
     const response = await fetch(`/api/projects/${projectId}/deliverables`, {
       method: 'POST',
       body: formData,
@@ -109,6 +144,7 @@ export default function ProjectDetailPage() {
 
   async function handleDeleteDeliverable(deliverableId: string) {
     try {
+      // backend unchanged
       const response = await fetch(
         `/api/projects/${projectId}/deliverables?deliverableId=${deliverableId}`,
         { method: 'DELETE' }
@@ -118,7 +154,7 @@ export default function ProjectDetailPage() {
         success('File Deleted', 'The file has been removed');
         fetchProject();
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to delete file');
     }
   }
@@ -129,6 +165,7 @@ export default function ProjectDetailPage() {
 
     setIsSubmittingComment(true);
     try {
+      // backend unchanged
       const response = await fetch(`/api/projects/${projectId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -139,7 +176,7 @@ export default function ProjectDetailPage() {
         setNewComment('');
         fetchProject();
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to add comment');
     } finally {
       setIsSubmittingComment(false);
@@ -149,6 +186,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteProject() {
     setIsDeleting(true);
     try {
+      // backend unchanged
       const response = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE',
       });
@@ -157,7 +195,7 @@ export default function ProjectDetailPage() {
         success('Project Deleted', 'The project has been deleted');
         router.push('/app/projects');
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to delete project');
     } finally {
       setIsDeleting(false);
@@ -165,28 +203,26 @@ export default function ProjectDetailPage() {
     }
   }
 
-  function copyShareLink() {
-    if (project) {
-      navigator.clipboard.writeText(project.shareUrl);
+  async function copyShareLink() {
+    if (!project) return;
+    try {
+      await navigator.clipboard.writeText(project.shareUrl);
       success('Link Copied', 'Share link copied to clipboard');
+    } catch {
+      showError('Error', 'Failed to copy link');
     }
   }
 
-  function formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
+  const openClientHref = useMemo(() => {
+    if (!project) return '#';
+    // Prefer the canonical shareUrl your backend provides
+    return project.shareUrl;
+  }, [project]);
 
-  if (isLoading) {
-    return <PageLoader message="Loading project..." />;
-  }
+  if (isLoading) return <PageLoader message="Loading project..." />;
+  if (!project) return null;
 
-  if (!project) {
-    return null;
-  }
+  const canEdit = project.status !== 'APPROVED';
 
   return (
     <div>
@@ -194,222 +230,358 @@ export default function ProjectDetailPage() {
         title={project.title}
         description={`${project.clientName} • ${project.clientEmail}`}
         action={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={project.status} size="lg" />
+
             <Button variant="secondary" onClick={copyShareLink}>
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-              Share
+              <span className="inline-flex items-center gap-2">
+                <Copy className="h-4 w-4" aria-hidden="true" />
+                Copy share link
+              </span>
             </Button>
+
+            <a
+              href={openClientHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex"
+            >
+              <Button variant="secondary">
+                <span className="inline-flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  Open client view
+                </span>
+              </Button>
+            </a>
           </div>
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Main column */}
+        <div className="lg:col-span-8 space-y-6">
           {/* Deliverables */}
-          <Card>
+          <Card className="p-0 overflow-hidden">
             <CardHeader
               action={
-                project.status !== 'APPROVED' && (
-                  <span className="text-sm text-gray-500">
-                    {project.deliverables.length} files
-                  </span>
-                )
+                <span className="text-sm text-gray-500">
+                  {project.deliverables.length} file(s)
+                </span>
               }
             >
               <CardTitle>Deliverables</CardTitle>
             </CardHeader>
 
-            {project.status !== 'APPROVED' && (
-              <div className="mb-6">
-                <FileUpload
-                  onUpload={handleUpload}
-                  accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,video/*,audio/*"
-                  maxSize={100 * 1024 * 1024}
-                  hint="Max 100MB. Images, PDFs, documents, videos, and archives."
-                />
-              </div>
-            )}
+            <div className="px-6 pb-6">
+              {canEdit && (
+                <div className="mb-5">
+                  <FileUpload
+                    onUpload={handleUpload}
+                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,video/*,audio/*"
+                    maxSize={100 * 1024 * 1024}
+                    hint="Max 100MB. Images, PDFs, documents, videos, and archives."
+                  />
+                </div>
+              )}
 
-            {project.deliverables.length > 0 ? (
-              <div className="space-y-3">
-                {project.deliverables.map((deliverable) => (
-                  <div
-                    key={deliverable.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-200">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{deliverable.fileName}</p>
-                        <p className="text-sm text-gray-500">
-                          {formatFileSize(deliverable.fileSize)} • v{deliverable.versionNumber}
-                        </p>
+              {project.deliverables.length > 0 ? (
+                <div className="space-y-3">
+                  {project.deliverables.map((d) => (
+                    <div
+                      key={d.id}
+                      className="rounded-2xl border border-gray-200 bg-white p-4"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gray-50 ring-1 ring-gray-200">
+                            {fileKindIcon(d.mimeType)}
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900 truncate">
+                              {d.fileName}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-600">
+                              {formatFileSize(d.fileSize)}
+                              <span className="mx-2 text-gray-300">•</span>
+                              <span className="font-medium text-gray-900">v{d.versionNumber}</span>
+                            </p>
+                            <p className="mt-1 text-xs text-gray-500">
+                              Uploaded {new Date(d.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <a
+                            href={d.webViewLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex"
+                            title="View"
+                          >
+                            <Button variant="secondary" size="sm">
+                              <span className="inline-flex items-center gap-2">
+                                <Eye className="h-4 w-4" aria-hidden="true" />
+                                View
+                              </span>
+                            </Button>
+                          </a>
+
+                          <a
+                            href={d.downloadLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex"
+                            title="Download"
+                          >
+                            <Button variant="secondary" size="sm">
+                              <span className="inline-flex items-center gap-2">
+                                <Download className="h-4 w-4" aria-hidden="true" />
+                                Download
+                              </span>
+                            </Button>
+                          </a>
+
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteDeliverable(d.id)}
+                              title="Delete"
+                            >
+                              <span className="inline-flex items-center gap-2 text-red-700">
+                                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                Delete
+                              </span>
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={deliverable.webViewLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-lg"
-                        title="View"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      </a>
-                      {project.status !== 'APPROVED' && (
-                        <button
-                          onClick={() => handleDeleteDeliverable(deliverable.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg"
-                          title="Delete"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-8">
-                No deliverables uploaded yet.
-              </p>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                  <p className="font-semibold text-gray-900">No deliverables yet</p>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Upload files to start the review process.
+                  </p>
+                </div>
+              )}
+            </div>
           </Card>
 
           {/* Comments */}
-          <Card>
-            <CardHeader>
+          <Card className="p-0 overflow-hidden">
+            <CardHeader
+              action={
+                <span className="text-sm text-gray-500">
+                  {project.comments.length} comment(s)
+                </span>
+              }
+            >
               <CardTitle>Comments</CardTitle>
             </CardHeader>
 
-            {project.comments.length > 0 ? (
-              <div className="space-y-4 mb-6">
-                {project.comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-4">
-                    <Avatar name={comment.authorName} size="sm" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-gray-900">
-                          {comment.authorName}
-                        </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          comment.authorType === 'CLIENT'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {comment.authorType === 'CLIENT' ? 'Client' : 'Team'}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(comment.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-gray-600">{comment.body}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-4 mb-6">
-                No comments yet.
-              </p>
-            )}
+            <div className="px-6 pb-6">
+              {project.comments.length > 0 ? (
+                <div className="space-y-4 mb-6">
+                  {project.comments.map((c) => (
+                    <div key={c.id} className="flex gap-3">
+                      <Avatar name={c.authorName} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-gray-900">{c.authorName}</span>
+                          <span
+                            className={[
+                              'text-xs px-2 py-0.5 rounded-full font-medium ring-1',
+                              c.authorType === 'CLIENT'
+                                ? 'bg-indigo-50 text-indigo-700 ring-indigo-200'
+                                : 'bg-gray-50 text-gray-700 ring-gray-200',
+                            ].join(' ')}
+                          >
+                            {c.authorType === 'CLIENT' ? 'Client' : 'Team'}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(c.createdAt).toLocaleString()}
+                          </span>
+                        </div>
 
-            {project.status !== 'APPROVED' && (
-              <form onSubmit={handleSubmitComment}>
-                <Textarea
-                  placeholder="Add a comment..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  className="mb-3"
-                />
-                <Button type="submit" isLoading={isSubmittingComment} disabled={!newComment.trim()}>
-                  Add Comment
-                </Button>
-              </form>
-            )}
+                        <div className="mt-2 rounded-2xl border border-gray-200 bg-white p-3">
+                          <p className="text-gray-700 whitespace-pre-wrap">{c.body}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center mb-6">
+                  <p className="font-semibold text-gray-900">No comments yet</p>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Add a note for your client or your team.
+                  </p>
+                </div>
+              )}
+
+              {canEdit && (
+                <form onSubmit={handleSubmitComment}>
+                  <Textarea
+                    label="Add a comment"
+                    placeholder="Write an update, question, or note…"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="mb-3"
+                  />
+                  <Button
+                    type="submit"
+                    isLoading={isSubmittingComment}
+                    disabled={!newComment.trim()}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <SendHorizonal className="h-4 w-4" aria-hidden="true" />
+                      Post comment
+                    </span>
+                  </Button>
+                </form>
+              )}
+            </div>
           </Card>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Project Info */}
-          <Card>
-            <h3 className="font-semibold text-gray-900 mb-4">Project Details</h3>
-            <dl className="space-y-3 text-sm">
-              <div>
-                <dt className="text-gray-500">Status</dt>
-                <dd className="mt-1">
-                  <StatusBadge status={project.status} />
-                </dd>
+        <div className="lg:col-span-4 space-y-6">
+          {/* Project details */}
+          <Card className="p-0 overflow-hidden">
+            <div className="border-b border-gray-200 px-6 py-5">
+              <h3 className="text-lg font-semibold text-gray-900">Project details</h3>
+              <p className="mt-1 text-sm text-gray-600">Quick info and actions</p>
+            </div>
+
+            <div className="px-6 py-6">
+              <dl className="space-y-4 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-gray-500 inline-flex items-center gap-2">
+                    <StatusBadge status={project.status} />
+                    Status
+                  </dt>
+                  <dd className="font-semibold text-gray-900">{project.status}</dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-gray-500 inline-flex items-center gap-2">
+                    <UserRound className="h-4 w-4" aria-hidden="true" />
+                    Client
+                  </dt>
+                  <dd className="text-gray-900 text-right">{project.clientName}</dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-gray-500 inline-flex items-center gap-2">
+                    <Mail className="h-4 w-4" aria-hidden="true" />
+                    Email
+                  </dt>
+                  <dd className="text-gray-900 text-right break-words">{project.clientEmail}</dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-gray-500 inline-flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                    Created
+                  </dt>
+                  <dd className="text-gray-900 text-right">
+                    {new Date(project.createdAt).toLocaleDateString()}
+                  </dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-gray-500">Share link</dt>
+                  <dd className="text-right">
+                    <button
+                      onClick={copyShareLink}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 hover:text-indigo-800"
+                      type="button"
+                    >
+                      <Copy className="h-4 w-4" aria-hidden="true" />
+                      Copy
+                    </button>
+                  </dd>
+                </div>
+              </dl>
+
+              <div className="mt-6 grid grid-cols-1 gap-3">
+                <a href={project.shareUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="secondary" fullWidth>
+                    <span className="inline-flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      Open client view
+                    </span>
+                  </Button>
+                </a>
+
+                <Link href="/app/projects">
+                  <Button variant="secondary" fullWidth>
+                    Back to projects
+                  </Button>
+                </Link>
               </div>
-              <div>
-                <dt className="text-gray-500">Client</dt>
-                <dd className="text-gray-900 mt-1">{project.clientName}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Email</dt>
-                <dd className="text-gray-900 mt-1">{project.clientEmail}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Created</dt>
-                <dd className="text-gray-900 mt-1">
-                  {new Date(project.createdAt).toLocaleDateString()}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Share Link</dt>
-                <dd className="mt-1">
-                  <button
-                    onClick={copyShareLink}
-                    className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
-                  >
-                    Copy Link
-                  </button>
-                </dd>
-              </div>
-            </dl>
+            </div>
           </Card>
 
           {/* Review */}
           {project.review && (
-            <Card>
-              <h3 className="font-semibold text-gray-900 mb-4">Client Review</h3>
-              <StarDisplay rating={project.review.rating} size="md" />
-              {project.review.text && (
-                <p className="mt-3 text-gray-600 text-sm">"{project.review.text}"</p>
-              )}
-              <p className="mt-2 text-xs text-gray-500">
-                by {project.review.authorName}
-              </p>
+            <Card className="p-0 overflow-hidden">
+              <div className="border-b border-gray-200 px-6 py-5">
+                <h3 className="text-lg font-semibold text-gray-900">Client review</h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Submitted {new Date(project.review.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+
+              <div className="px-6 py-6">
+                <StarDisplay rating={project.review.rating} size="md" />
+                {project.review.text && (
+                  <p className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">
+                    “{project.review.text}”
+                  </p>
+                )}
+                <p className="mt-3 text-xs text-gray-500">
+                  — {project.review.authorName}
+                </p>
+              </div>
             </Card>
           )}
 
-          {/* Danger Zone */}
-          <Card className="border-red-200">
-            <h3 className="font-semibold text-red-600 mb-4">Danger Zone</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Deleting this project will permanently remove all deliverables and comments.
-            </p>
-            <Button
-              variant="danger"
-              onClick={() => setShowDeleteModal(true)}
-              fullWidth
-            >
-              Delete Project
-            </Button>
+          {/* Danger zone */}
+          <Card className="p-0 overflow-hidden border-red-200">
+            <div className="border-b border-red-200 px-6 py-5 bg-red-50">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-red-700">Danger zone</h3>
+                  <p className="mt-1 text-sm text-red-700/80">
+                    Permanent actions
+                  </p>
+                </div>
+                <ShieldAlert className="h-5 w-5 text-red-700" aria-hidden="true" />
+              </div>
+            </div>
+
+            <div className="px-6 py-6">
+              <p className="text-sm text-gray-700 mb-4">
+                Deleting this project permanently removes deliverables and comments.
+              </p>
+
+              <Button
+                variant="danger"
+                onClick={() => setShowDeleteModal(true)}
+                fullWidth
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  Delete project
+                </span>
+              </Button>
+            </div>
           </Card>
         </div>
       </div>
@@ -419,7 +591,7 @@ export default function ProjectDetailPage() {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteProject}
-        title="Delete Project"
+        title="Delete project"
         message="Are you sure you want to delete this project? This action cannot be undone."
         confirmText="Delete"
         variant="danger"

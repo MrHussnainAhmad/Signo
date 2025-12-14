@@ -35,33 +35,36 @@ export function FileUpload({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const validateFile = useCallback((file: File): string | null => {
-    if (file.size > maxSize) {
-      return `File too large. Maximum size is ${formatFileSize(maxSize)}`;
-    }
-
-    if (accept !== '*') {
-      const acceptedTypes = accept.split(',').map((t) => t.trim());
-      const fileType = file.type;
-      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-
-      const isAccepted = acceptedTypes.some((type) => {
-        if (type.startsWith('.')) {
-          return fileExtension === type.toLowerCase();
-        }
-        if (type.endsWith('/*')) {
-          return fileType.startsWith(type.replace('/*', '/'));
-        }
-        return fileType === type;
-      });
-
-      if (!isAccepted) {
-        return 'File type not allowed';
+  const validateFile = useCallback(
+    (file: File): string | null => {
+      if (file.size > maxSize) {
+        return `File too large. Maximum size is ${formatFileSize(maxSize)}`;
       }
-    }
 
-    return null;
-  }, [accept, maxSize]);
+      if (accept !== '*') {
+        const acceptedTypes = accept.split(',').map((t) => t.trim());
+        const fileType = file.type;
+        const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+
+        const isAccepted = acceptedTypes.some((type) => {
+          if (type.startsWith('.')) {
+            return fileExtension === type.toLowerCase();
+          }
+          if (type.endsWith('/*')) {
+            return fileType.startsWith(type.replace('/*', '/'));
+          }
+          return fileType === type;
+        });
+
+        if (!isAccepted) {
+          return 'File type not allowed';
+        }
+      }
+
+      return null;
+    },
+    [accept, maxSize]
+  );
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -130,9 +133,9 @@ export function FileUpload({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          relative border-2 border-dashed rounded-lg p-8 text-center
-          transition-colors cursor-pointer
-          ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'}
+          relative border-2 border-dashed rounded-2xl p-8 text-center
+          transition-all cursor-pointer
+          ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'}
           ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}
           ${error ? 'border-red-300 bg-red-50' : ''}
         `}
@@ -149,7 +152,7 @@ export function FileUpload({
         {isUploading ? (
           <div className="flex flex-col items-center">
             <Spinner size="lg" />
-            <p className="mt-4 text-sm text-gray-600">Uploading...</p>
+            <p className="mt-4 text-sm font-medium text-gray-700">Uploading...</p>
           </div>
         ) : (
           <>
@@ -166,16 +169,14 @@ export function FileUpload({
                 strokeLinejoin="round"
               />
             </svg>
-            <p className="mt-4 text-sm font-medium text-gray-900">{label}</p>
-            <p className="mt-1 text-xs text-gray-500">
-              Drag and drop or click to browse
-            </p>
-            {hint && <p className="mt-2 text-xs text-gray-400">{hint}</p>}
+            <p className="mt-4 text-sm font-semibold text-gray-900">{label}</p>
+            <p className="mt-1 text-sm text-gray-600">Drag and drop or click to browse</p>
+            {hint && <p className="mt-3 text-xs text-gray-500">{hint}</p>}
           </>
         )}
       </div>
 
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-3 text-sm font-medium text-red-600">{error}</p>}
     </div>
   );
 }
@@ -210,7 +211,7 @@ export function MultiFileUpload({
     setError(null);
 
     const fileArray = Array.from(newFiles);
-    
+
     if (files.length + fileArray.length > maxFiles) {
       setError(`Maximum ${maxFiles} files allowed`);
       return;
@@ -269,9 +270,9 @@ export function MultiFileUpload({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
-          transition-colors
-          ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'}
+          border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer
+          transition-all
+          ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'}
           ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
@@ -286,33 +287,43 @@ export function MultiFileUpload({
         />
 
         {isUploading ? (
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-3">
             <Spinner size="sm" />
-            <span className="text-sm text-gray-600">Uploading...</span>
+            <span className="text-sm font-medium text-gray-700">Uploading...</span>
           </div>
         ) : (
           <>
-            <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            <svg
+              className="mx-auto h-8 w-8 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
             </svg>
-            <p className="mt-2 text-sm text-gray-600">{label}</p>
+            <p className="mt-2 text-sm font-medium text-gray-700">{label}</p>
           </>
         )}
       </div>
 
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-3 text-sm font-medium text-red-600">{error}</p>}
 
       {files.length > 0 && (
         <ul className="mt-4 space-y-2">
           {files.map((file, index) => (
             <li
               key={`${file.name}-${index}`}
-              className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-xl ring-1 ring-gray-200"
             >
-              <span className="text-sm text-gray-700 truncate">{file.name}</span>
+              <span className="text-sm font-medium text-gray-700 truncate">{file.name}</span>
               <button
                 onClick={() => removeFile(index)}
-                className="p-1 text-gray-400 hover:text-red-500"
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path

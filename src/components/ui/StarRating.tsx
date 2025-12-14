@@ -49,10 +49,7 @@ export function StarRating({
 
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      <div
-        className="flex items-center gap-0.5"
-        onMouseLeave={handleMouseLeave}
-      >
+      <div className="flex items-center gap-0.5" onMouseLeave={handleMouseLeave}>
         {[1, 2, 3, 4, 5].map((rating) => (
           <button
             key={rating}
@@ -62,7 +59,7 @@ export function StarRating({
             disabled={readonly}
             className={`
               ${readonly ? 'cursor-default' : 'cursor-pointer'}
-              focus:outline-none focus:ring-0 transition-transform
+              focus:outline-none transition-transform
               ${!readonly && 'hover:scale-110'}
             `}
             aria-label={`Rate ${rating} out of 5`}
@@ -82,9 +79,7 @@ export function StarRating({
         ))}
       </div>
       {showLabel && displayValue > 0 && (
-        <span className="ml-2 text-sm text-gray-600">
-          {labels[displayValue - 1]}
-        </span>
+        <span className="ml-2 text-sm font-medium text-gray-600">{labels[displayValue - 1]}</span>
       )}
     </div>
   );
@@ -98,22 +93,14 @@ interface StarDisplayProps {
   className?: string;
 }
 
-export function StarDisplay({
-  rating,
-  size = 'md',
-  showValue = false,
-  className = '',
-}: StarDisplayProps) {
+export function StarDisplay({ rating, size = 'md', showValue = false, className = '' }: StarDisplayProps) {
   return (
     <div className={`flex items-center gap-1 ${className}`}>
       <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map((star) => (
           <svg
             key={star}
-            className={`
-              ${sizeStyles[size]}
-              ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}
-            `}
+            className={`${sizeStyles[size]} ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -121,11 +108,7 @@ export function StarDisplay({
           </svg>
         ))}
       </div>
-      {showValue && (
-        <span className="ml-1.5 text-sm font-medium text-gray-700">
-          {rating.toFixed(1)}
-        </span>
-      )}
+      {showValue && <span className="ml-2 text-sm font-semibold text-gray-700">{rating.toFixed(1)}</span>}
     </div>
   );
 }
@@ -138,17 +121,13 @@ interface AverageRatingProps {
   className?: string;
 }
 
-export function AverageRating({
-  rating,
-  totalReviews,
-  size = 'md',
-  className = '',
-}: AverageRatingProps) {
+export function AverageRating({ rating, totalReviews, size = 'md', className = '' }: AverageRatingProps) {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-3 ${className}`}>
       <StarDisplay rating={Math.round(rating)} size={size} />
       <span className="text-sm text-gray-600">
-        {rating.toFixed(1)} ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
+        <span className="font-semibold text-gray-900">{rating.toFixed(1)}</span> ({totalReviews}{' '}
+        {totalReviews === 1 ? 'review' : 'reviews'})
       </span>
     </div>
   );

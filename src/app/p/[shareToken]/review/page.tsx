@@ -1,18 +1,24 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { ClientLayout, ClientAuthLayout } from '@/components/layout/ClientLayout';
+import { useParams } from 'next/navigation';
+import { ClientLayout } from '@/components/layout/ClientLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Input';
 import { StarRating } from '@/components/ui/StarRating';
 import { PageLoader } from '@/components/ui/Spinner';
 import { useToast, ToastProvider } from '@/components/ui/Toast';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  AlertTriangle,
+  Star,
+  Quote,
+} from 'lucide-react';
 
 function ReviewContent() {
   const params = useParams();
-  const router = useRouter();
   const { success, error: showError } = useToast();
   const shareToken = params.shareToken as string;
 
@@ -29,6 +35,7 @@ function ReviewContent() {
   useEffect(() => {
     async function fetchReviewStatus() {
       try {
+        // backend unchanged
         const [projectRes, reviewRes] = await Promise.all([
           fetch(`/api/client/projects/${shareToken}`),
           fetch(`/api/client/projects/${shareToken}/review`),
@@ -46,7 +53,7 @@ function ReviewContent() {
           setCanReview(reviewData.data.canReview);
           setExistingReview(reviewData.data.review);
         }
-      } catch (error) {
+      } catch {
         showError('Error', 'Failed to load review status');
       } finally {
         setIsLoading(false);
@@ -54,7 +61,7 @@ function ReviewContent() {
     }
 
     fetchReviewStatus();
-  }, [shareToken]);
+  }, [shareToken]); // keep logic as-is
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,6 +73,7 @@ function ReviewContent() {
 
     setIsSubmitting(true);
     try {
+      // backend unchanged
       const response = await fetch(`/api/client/projects/${shareToken}/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,7 +89,7 @@ function ReviewContent() {
       } else {
         showError('Error', data.error || 'Failed to submit review');
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to submit review');
     } finally {
       setIsSubmitting(false);
@@ -92,104 +100,174 @@ function ReviewContent() {
     return <PageLoader message="Loading..." />;
   }
 
-  // Already reviewed
-  if (existingReview) {
-    return (
-      <ClientLayout workspace={workspace}>
-        <div className="max-w-lg mx-auto">
-          <Card className="text-center py-12">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h1>
-            <p className="text-gray-600 mb-6">Your review has been submitted.</p>
-            
-            <div className="bg-gray-50 rounded-lg p-6 text-left mb-6">
-              <StarRating value={existingReview.rating} readonly size="lg" className="mb-3" />
-              {existingReview.text && (
-                <p className="text-gray-600">"{existingReview.text}"</p>
-              )}
-            </div>
-
-            <Button href={`/p/${shareToken}`} variant="secondary">
-              Back to Project
-            </Button>
-          </Card>
-        </div>
-      </ClientLayout>
-    );
-  }
-
-  // Cannot review (project not approved)
-  if (!canReview) {
-    return (
-      <ClientLayout workspace={workspace}>
-        <div className="max-w-lg mx-auto">
-          <Card className="text-center py-12">
-            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Review Not Available</h1>
-            <p className="text-gray-600 mb-6">
-              You can only leave a review after approving the project.
-            </p>
-            <Button href={`/p/${shareToken}`} variant="secondary">
-              Back to Project
-            </Button>
-          </Card>
-        </div>
-      </ClientLayout>
-    );
-  }
-
   return (
     <ClientLayout workspace={workspace}>
-      <div className="max-w-lg mx-auto">
-        <Card>
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Leave a Review</h1>
-            <p className="text-gray-600">
-              How was your experience with {projectTitle}?
-            </p>
-          </div>
+      <div className="mx-auto w-full max-w-3xl">
+        {/* Top header */}
+        <div className="mb-6 sm:mb-8">
+          <Button href={`/p/${shareToken}`} variant="secondary" className="mb-4">
+            <span className="inline-flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Back to project
+            </span>
+          </Button>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
-                Your Rating
-              </label>
-              <div className="flex justify-center">
-                <StarRating value={rating} onChange={setRating} size="lg" showLabel />
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+            <div className="flex items-start gap-4">
+              <div className="mt-0.5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 ring-1 ring-indigo-100">
+                <Star className="h-6 w-6 text-indigo-700" aria-hidden="true" />
+              </div>
+
+              <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
+                  Review
+                </h1>
+                <p className="mt-1 text-gray-600">
+                  {projectTitle ? (
+                    <>
+                      Share your experience with <span className="font-medium text-gray-900">{projectTitle}</span>.
+                    </>
+                  ) : (
+                    'Share your experience.'
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Already reviewed */}
+        {existingReview && (
+          <Card className="p-0 overflow-hidden">
+            <div className="border-b border-gray-200 px-6 py-5">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-green-50 ring-1 ring-green-200">
+                  <CheckCircle2 className="h-6 w-6 text-green-700" aria-hidden="true" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Review submitted</h2>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Thanks — your feedback has been saved.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <Textarea
-              label="Your Review (Optional)"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Share your experience..."
-              className="mb-6"
-            />
+            <div className="px-6 py-6">
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <StarRating
+                    value={existingReview.rating}
+                    readonly
+                    size="lg"
+                    className="mb-0"
+                  />
+                  <Quote className="h-5 w-5 text-gray-300" aria-hidden="true" />
+                </div>
 
-            <div className="flex gap-3">
-              <Button href={`/p/${shareToken}`} variant="secondary" fullWidth>
-                Skip
-              </Button>
-              <Button type="submit" isLoading={isSubmitting} fullWidth disabled={rating === 0}>
-                Submit Review
-              </Button>
+                {existingReview.text && (
+                  <p className="mt-4 text-gray-700 whitespace-pre-wrap">
+                    “{existingReview.text}”
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <Button href={`/p/${shareToken}`} variant="secondary">
+                  Back to project
+                </Button>
+              </div>
             </div>
-          </form>
-        </Card>
+          </Card>
+        )}
+
+        {/* Cannot review */}
+        {!existingReview && !canReview && (
+          <Card className="p-0 overflow-hidden">
+            <div className="border-b border-gray-200 px-6 py-5">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 ring-1 ring-amber-200">
+                  <AlertTriangle className="h-6 w-6 text-amber-800" aria-hidden="true" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Review not available</h2>
+                  <p className="mt-1 text-sm text-gray-600">
+                    You can only leave a review after approving the project.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-6">
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                <p className="text-sm text-gray-700">
+                  Go back to the project, review the deliverables, and approve when you’re ready.
+                </p>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <Button href={`/p/${shareToken}`} variant="secondary">
+                  Back to project
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Review form */}
+        {!existingReview && canReview && (
+          <Card className="p-0 overflow-hidden">
+            <div className="border-b border-gray-200 px-6 py-5">
+              <h2 className="text-lg font-semibold text-gray-900">Leave a review</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                Choose a rating and optionally add a short note.
+              </p>
+            </div>
+
+            <div className="px-6 py-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Rating
+                  </label>
+                  <div className="flex justify-center sm:justify-start">
+                    <StarRating value={rating} onChange={setRating} size="lg" showLabel />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-gray-200 bg-white p-5">
+                  <Textarea
+                    label="Review note (optional)"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Share what went well, what could be improved, or any quick feedback…"
+                    className="mb-0"
+                  />
+                </div>
+
+                <div className="flex flex-col-reverse sm:flex-row gap-3">
+                  <Button href={`/p/${shareToken}`} variant="secondary" fullWidth>
+                    Skip
+                  </Button>
+                  <Button
+                    type="submit"
+                    isLoading={isSubmitting}
+                    fullWidth
+                    disabled={rating === 0}
+                  >
+                    Submit review
+                  </Button>
+                </div>
+
+                {rating === 0 && (
+                  <p className="text-xs text-gray-500 text-center sm:text-left">
+                    Select a rating to enable submit.
+                  </p>
+                )}
+              </form>
+            </div>
+          </Card>
+        )}
       </div>
     </ClientLayout>
   );

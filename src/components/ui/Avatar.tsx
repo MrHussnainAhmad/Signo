@@ -65,7 +65,7 @@ export function Avatar({ src, name, size = 'md', className = '' }: AvatarProps) 
   if (src) {
     return (
       <div
-        className={`relative inline-flex items-center justify-center rounded-full overflow-hidden ${styles.container} ${className}`}
+        className={`relative inline-flex items-center justify-center rounded-full overflow-hidden ring-1 ring-gray-200 ${styles.container} ${className}`}
       >
         <Image
           src={src}
@@ -81,7 +81,7 @@ export function Avatar({ src, name, size = 'md', className = '' }: AvatarProps) 
   return (
     <div
       className={`
-        inline-flex items-center justify-center rounded-full text-white font-medium
+        inline-flex items-center justify-center rounded-full text-white font-semibold
         ${styles.container} ${styles.text} ${bgColor} ${className}
       `}
       title={name}
@@ -106,10 +106,7 @@ export function AvatarGroup({ users, max = 4, size = 'sm', className = '' }: Ava
   return (
     <div className={`flex -space-x-2 ${className}`}>
       {visibleUsers.map((user, index) => (
-        <div
-          key={index}
-          className="relative ring-2 ring-white rounded-full"
-        >
+        <div key={index} className="relative ring-2 ring-white rounded-full">
           <Avatar src={user.avatarUrl} name={user.name} size={size} />
         </div>
       ))}
@@ -117,7 +114,7 @@ export function AvatarGroup({ users, max = 4, size = 'sm', className = '' }: Ava
         <div
           className={`
             relative inline-flex items-center justify-center rounded-full
-            bg-gray-200 text-gray-600 font-medium ring-2 ring-white
+            bg-gray-100 text-gray-700 font-semibold ring-2 ring-white
             ${sizeStyles[size].container} ${sizeStyles[size].text}
           `}
         >
@@ -133,11 +130,7 @@ interface AvatarWithStatusProps extends AvatarProps {
   status?: 'online' | 'offline' | 'busy' | 'away';
 }
 
-export function AvatarWithStatus({
-  status,
-  size = 'md',
-  ...props
-}: AvatarWithStatusProps) {
+export function AvatarWithStatus({ status, size = 'md', ...props }: AvatarWithStatusProps) {
   const statusColors = {
     online: 'bg-green-500',
     offline: 'bg-gray-400',

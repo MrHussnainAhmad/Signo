@@ -16,17 +16,12 @@ const paddingStyles = {
   lg: 'p-8',
 };
 
-export function Card({
-  children,
-  className = '',
-  hover = false,
-  padding = 'md',
-}: CardProps) {
+export function Card({ children, className = '', hover = false, padding = 'md' }: CardProps) {
   return (
     <div
       className={`
-        bg-white rounded-xl shadow-sm border border-gray-200
-        ${hover ? 'transition-shadow hover:shadow-md' : ''}
+        bg-white rounded-2xl shadow-sm border border-gray-200
+        ${hover ? 'transition-all hover:shadow-md hover:-translate-y-0.5' : ''}
         ${paddingStyles[padding]}
         ${className}
       `}
@@ -44,9 +39,9 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className = '', action }: CardHeaderProps) {
   return (
-    <div className={`flex items-center justify-between mb-4 ${className}`}>
-      <div>{children}</div>
-      {action && <div>{action}</div>}
+    <div className={`flex items-start justify-between gap-4 mb-5 ${className}`}>
+      <div className="min-w-0">{children}</div>
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
@@ -58,11 +53,7 @@ interface CardTitleProps {
 }
 
 export function CardTitle({ children, className = '', as: Tag = 'h3' }: CardTitleProps) {
-  return (
-    <Tag className={`text-lg font-semibold text-gray-900 ${className}`}>
-      {children}
-    </Tag>
-  );
+  return <Tag className={`text-lg font-semibold text-gray-900 ${className}`}>{children}</Tag>;
 }
 
 interface CardDescriptionProps {
@@ -71,11 +62,7 @@ interface CardDescriptionProps {
 }
 
 export function CardDescription({ children, className = '' }: CardDescriptionProps) {
-  return (
-    <p className={`text-sm text-gray-500 mt-1 ${className}`}>
-      {children}
-    </p>
-  );
+  return <p className={`text-sm text-gray-600 mt-1 ${className}`}>{children}</p>;
 }
 
 interface CardContentProps {
@@ -93,11 +80,7 @@ interface CardFooterProps {
 }
 
 export function CardFooter({ children, className = '' }: CardFooterProps) {
-  return (
-    <div className={`mt-6 pt-4 border-t border-gray-100 ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`mt-6 pt-5 border-t border-gray-200 ${className}`}>{children}</div>;
 }
 
 // Stat Card for dashboard
@@ -115,23 +98,23 @@ interface StatCardProps {
 export function StatCard({ label, value, icon, change, className = '' }: StatCardProps) {
   return (
     <Card className={className}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{label}</p>
-          <p className="mt-1 text-3xl font-bold text-gray-900">{value}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-600">{label}</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{value}</p>
           {change && (
             <p
-              className={`mt-1 text-sm ${
+              className={`mt-2 text-sm font-medium ${
                 change.value >= 0 ? 'text-green-600' : 'text-red-600'
               }`}
             >
               {change.value >= 0 ? '↑' : '↓'} {Math.abs(change.value)}%{' '}
-              <span className="text-gray-500">{change.label}</span>
+              <span className="text-gray-500 font-normal">{change.label}</span>
             </p>
           )}
         </div>
         {icon && (
-          <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
             {icon}
           </div>
         )}
@@ -158,13 +141,9 @@ export function EmptyStateCard({
 }: EmptyStateCardProps) {
   return (
     <Card className={`text-center py-12 ${className}`}>
-      {icon && (
-        <div className="mx-auto w-12 h-12 text-gray-400 mb-4">{icon}</div>
-      )}
-      <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-      {description && (
-        <p className="mt-2 text-gray-500 max-w-sm mx-auto">{description}</p>
-      )}
+      {icon && <div className="mx-auto w-12 h-12 text-gray-400 mb-4">{icon}</div>}
+      <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+      {description && <p className="mt-2 text-gray-600 max-w-sm mx-auto">{description}</p>}
       {action && <div className="mt-6">{action}</div>}
     </Card>
   );

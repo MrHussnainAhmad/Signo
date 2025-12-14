@@ -1,12 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/AppLayout';
 import { Card, StatCard, EmptyStateCard } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Spinner';
+import {
+  Plus,
+  Folder,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
+  CreditCard,
+  Users,
+} from 'lucide-react';
 
 interface DashboardData {
   stats: {
@@ -35,6 +45,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboard() {
       try {
+        // backend unchanged
         const [projectsRes, billingRes] = await Promise.all([
           fetch('/api/projects?limit=5'),
           fetch('/api/billing/checkout'),
@@ -45,6 +56,7 @@ export default function DashboardPage() {
 
         if (projectsData.success) {
           const projects = projectsData.data.projects;
+
           setData({
             stats: {
               totalProjects: projectsData.data.pagination.total,
@@ -69,19 +81,26 @@ export default function DashboardPage() {
     fetchDashboard();
   }, []);
 
+  const isUnpaid = useMemo(() => data?.workspace.plan === 'UNPAID', [data]);
+
   if (isLoading) {
     return (
       <div>
         <div className="mb-8">
           <Skeleton width={200} height={32} className="mb-2" />
-          <Skeleton width={300} height={20} />
+          <Skeleton width={320} height={20} />
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} height={120} className="rounded-xl" />
+            <Skeleton key={i} height={120} className="rounded-2xl" />
           ))}
         </div>
-        <Skeleton height={300} className="rounded-xl" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <Skeleton height={320} className="rounded-2xl lg:col-span-8" />
+          <Skeleton height={320} className="rounded-2xl lg:col-span-4" />
+        </div>
       </div>
     );
   }
@@ -93,10 +112,10 @@ export default function DashboardPage() {
         description="Overview of your projects and activity"
         action={
           <Button href="/app/projects/new">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            New Project
+            <span className="inline-flex items-center gap-2">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              New project
+            </span>
           </Button>
         }
       />
@@ -106,103 +125,135 @@ export default function DashboardPage() {
         <StatCard
           label="Total Projects"
           value={data?.stats.totalProjects || 0}
-          icon={
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            </svg>
-          }
+          icon={<Folder className="w-6 h-6" aria-hidden="true" />}
         />
         <StatCard
           label="Waiting for Client"
           value={data?.stats.waitingProjects || 0}
-          icon={
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
+          icon={<Clock className="w-6 h-6" aria-hidden="true" />}
         />
         <StatCard
           label="Changes Requested"
           value={data?.stats.changesRequested || 0}
-          icon={
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          }
+          icon={<AlertTriangle className="w-6 h-6" aria-hidden="true" />}
         />
         <StatCard
           label="Approved"
           value={data?.stats.approvedProjects || 0}
-          icon={
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
+          icon={<CheckCircle2 className="w-6 h-6" aria-hidden="true" />}
         />
       </div>
 
-      {/* Recent Projects */}
-      <Card>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Projects</h2>
-          <Link href="/app/projects" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-            View all →
-          </Link>
-        </div>
-
-        {data?.recentProjects && data.recentProjects.length > 0 ? (
-          <div className="divide-y divide-gray-100">
-            {data.recentProjects.map((project) => (
-              <Link
-                key={project.id}
-                href={`/app/projects/${project.id}`}
-                className="flex items-center justify-between py-4 hover:bg-gray-50 -mx-6 px-6 transition-colors"
-              >
-                <div>
-                  <h3 className="font-medium text-gray-900">{project.title}</h3>
-                  <p className="text-sm text-gray-500">{project.clientName}</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <StatusBadge status={project.status} />
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <EmptyStateCard
-            icon={
-              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
-            }
-            title="No projects yet"
-            description="Create your first project to get started"
-            action={
-              <Button href="/app/projects/new">Create Project</Button>
-            }
-          />
-        )}
-      </Card>
-
-      {/* Quick Actions */}
-      {data?.workspace.plan === 'UNPAID' && (
-        <Card className="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0">
-          <div className="flex items-center justify-between">
+      {/* Main grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Recent projects */}
+        <Card className="lg:col-span-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <div>
-              <h3 className="text-lg font-semibold">Upgrade to unlock all features</h3>
-              <p className="mt-1 text-indigo-100">
-                Get unlimited projects and team collaboration
-              </p>
+              <h2 className="text-lg font-semibold text-gray-900">Recent projects</h2>
+              <p className="text-sm text-gray-600">Latest activity from your workspace</p>
             </div>
-            <Button href="/app/billing" variant="secondary">
-              View Plans
-            </Button>
+
+            <Link
+              href="/app/projects"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 hover:text-indigo-800"
+            >
+              View all
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
           </div>
+
+          {data?.recentProjects && data.recentProjects.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {data.recentProjects.map((project) => (
+                <Link
+                  key={project.id}
+                  href={`/app/projects/${project.id}`}
+                  className="group block -mx-6 px-6 py-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{project.title}</p>
+                      <p className="mt-1 text-sm text-gray-600 truncate">{project.clientName}</p>
+
+                      <p className="mt-2 text-xs text-gray-500">
+                        Updated {new Date(project.updatedAt).toLocaleString()}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <StatusBadge status={project.status} />
+                      <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-gray-500 transition" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <EmptyStateCard
+              icon={<Folder className="w-12 h-12" aria-hidden="true" />}
+              title="No projects yet"
+              description="Create your first project to get started."
+              action={<Button href="/app/projects/new">Create project</Button>}
+            />
+          )}
         </Card>
-      )}
+
+        {/* Right column: workspace + upgrade */}
+        <div className="lg:col-span-4 space-y-6">
+          <Card>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Workspace</h3>
+                <p className="mt-1 text-sm text-gray-600">Plan and members</p>
+              </div>
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 ring-1 ring-gray-200">
+                <Users className="h-5 w-5 text-gray-700" aria-hidden="true" />
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Plan</span>
+                <span className="font-semibold text-gray-900">{data?.workspace.plan || 'UNPAID'}</span>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Members</span>
+                <span className="font-semibold text-gray-900">{data?.workspace.memberCount || 1}</span>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <Button href="/app/billing" variant="secondary" fullWidth>
+                <span className="inline-flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" aria-hidden="true" />
+                  Billing
+                </span>
+              </Button>
+            </div>
+          </Card>
+
+          {isUnpaid && (
+            <Card className="border border-indigo-200 bg-indigo-50">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Unlock the workspace</h3>
+                  <p className="mt-1 text-sm text-gray-700">
+                    Purchase a plan to enable the full workflow and team features.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <Button href="/app/billing" fullWidth>
+                  View plans
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -46,7 +46,6 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <a href="/" className="inline-flex items-center gap-2">
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
@@ -56,25 +55,17 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <span className="text-2xl font-bold text-gray-900">Signo</span>
           </a>
         </div>
 
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-            {subtitle && (
-              <p className="mt-2 text-gray-600">{subtitle}</p>
-            )}
+            {subtitle && <p className="mt-2 text-gray-600">{subtitle}</p>}
           </div>
           {children}
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/AppLayout';
 import { Card, EmptyStateCard } from '@/components/ui/Card';
@@ -8,6 +8,17 @@ import { Button } from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Spinner';
+import { useToast } from '@/components/ui/Toast';
+import {
+  Plus,
+  Search,
+  Files,
+  MessageSquareText,
+  CalendarDays,
+  Copy,
+  ArrowUpRight,
+  Filter,
+} from 'lucide-react';
 
 interface Project {
   id: string;
@@ -22,24 +33,33 @@ interface Project {
   updatedAt: string;
 }
 
+const filterOptions = [
+  { value: 'all', label: 'All' },
+  { value: 'WAITING_FOR_CLIENT', label: 'Waiting' },
+  { value: 'CHANGES_REQUESTED', label: 'Changes' },
+  { value: 'APPROVED', label: 'Approved' },
+] as const;
+
 export default function ProjectsPage() {
+  const { success, error: showError } = useToast();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('all');
+  const [filter, setFilter] = useState<(typeof filterOptions)[number]['value']>('all');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     fetchProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   async function fetchProjects() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filter !== 'all') {
-        params.set('status', filter);
-      }
-      
+      if (filter !== 'all') params.set('status', filter);
+
+      // backend unchanged
       const response = await fetch(`/api/projects?${params.toString()}`);
       const data = await response.json();
 
@@ -48,25 +68,32 @@ export default function ProjectsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch projects:', error);
+      showError('Error', 'Failed to load projects');
     } finally {
       setIsLoading(false);
     }
   }
 
-  const filteredProjects = projects.filter((project) => {
-    if (!search) return true;
-    const searchLower = search.toLowerCase();
-    return (
-      project.title.toLowerCase().includes(searchLower) ||
-      project.clientName.toLowerCase().includes(searchLower) ||
-      project.clientEmail.toLowerCase().includes(searchLower)
-    );
-  });
+  const filteredProjects = useMemo(() => {
+    if (!search) return projects;
+    const q = search.toLowerCase();
+    return projects.filter((p) => {
+      return (
+        p.title.toLowerCase().includes(q) ||
+        p.clientName.toLowerCase().includes(q) ||
+        p.clientEmail.toLowerCase().includes(q)
+      );
+    });
+  }, [projects, search]);
 
-  const copyShareLink = (url: string) => {
-    navigator.clipboard.writeText(url);
-    // Could add toast notification here
-  };
+  async function copyShareLink(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      success('Copied', 'Share link copied to clipboard');
+    } catch {
+      showError('Error', 'Could not copy link');
+    }
+  }
 
   return (
     <div>
@@ -75,112 +102,154 @@ export default function ProjectsPage() {
         description="Manage your client projects"
         action={
           <Button href="/app/projects/new">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            New Project
+            <span className="inline-flex items-center gap-2">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              New project
+            </span>
           </Button>
         }
       />
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="flex-1">
-          <Input
-            placeholder="Search projects..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            leftIcon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            }
-          />
-        </div>
-        <div className="flex gap-2">
-          {[
-            { value: 'all', label: 'All' },
-            { value: 'WAITING_FOR_CLIENT', label: 'Waiting' },
-            { value: 'CHANGES_REQUESTED', label: 'Changes' },
-            { value: 'APPROVED', label: 'Approved' },
-          ].map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setFilter(option.value)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                filter === option.value
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Toolbar */}
+      <Card className="mb-6">
+        <div className="flex flex-col gap-4">
+          {/* Search */}
+          <div className="flex flex-col md:flex-row gap-3 md:items-center">
+            <div className="flex-1">
+              <Input
+                placeholder="Search by project, client name, or email…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                leftIcon={<Search className="w-5 h-5" aria-hidden="true" />}
+              />
+            </div>
 
-      {/* Projects List */}
+            {/* Optional small hint */}
+            <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
+              <Filter className="h-4 w-4" aria-hidden="true" />
+              Filter by status
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {filterOptions.map((option) => {
+              const active = filter === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => setFilter(option.value)}
+                  className={[
+                    'shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition',
+                    active
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50 ring-1 ring-gray-200',
+                  ].join(' ')}
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+
+            <div className="ml-auto hidden sm:block text-sm text-gray-500">
+              {filteredProjects.length} result{filteredProjects.length === 1 ? '' : 's'}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* List */}
       {isLoading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} height={120} className="rounded-xl" />
+            <Skeleton key={i} height={140} className="rounded-2xl" />
           ))}
         </div>
       ) : filteredProjects.length > 0 ? (
         <div className="space-y-4">
           {filteredProjects.map((project) => (
-            <Card key={project.id} hover className="p-0">
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+            <Card key={project.id} hover className="p-0 overflow-hidden">
+              <div className="p-5 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  {/* Left */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
                       <Link
                         href={`/app/projects/${project.id}`}
-                        className="text-lg font-semibold text-gray-900 hover:text-indigo-600"
+                        className="text-lg font-semibold text-gray-900 hover:text-indigo-700 truncate"
                       >
                         {project.title}
                       </Link>
                       <StatusBadge status={project.status} />
                     </div>
-                    <p className="text-gray-600">
-                      {project.clientName} • {project.clientEmail}
+
+                    <p className="mt-2 text-sm text-gray-600">
+                      <span className="font-medium text-gray-900">{project.clientName}</span>{' '}
+                      <span className="text-gray-400">•</span> {project.clientEmail}
                     </p>
-                    <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        {project.deliverableCount} files
+
+                    <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-600">
+                      <span className="inline-flex items-center gap-2">
+                        <Files className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                        {project.deliverableCount} file{project.deliverableCount === 1 ? '' : 's'}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        {project.commentCount} comments
+
+                      <span className="inline-flex items-center gap-2">
+                        <MessageSquareText className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                        {project.commentCount} comment{project.commentCount === 1 ? '' : 's'}
                       </span>
-                      <span>
+
+                      <span className="inline-flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4 text-gray-400" aria-hidden="true" />
                         Updated {new Date(project.updatedAt).toLocaleDateString()}
                       </span>
                     </div>
+
+                    {/* Share link row */}
+                    <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-gray-500">Share link</p>
+                          <p className="mt-1 text-sm text-gray-700 truncate">{project.shareUrl}</p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => copyShareLink(project.shareUrl)}
+                          className="inline-flex items-center justify-center rounded-xl bg-white px-3 py-2 text-sm font-semibold text-gray-800 ring-1 ring-gray-200 hover:bg-gray-50 transition"
+                          title="Copy share link"
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            <Copy className="h-4 w-4" aria-hidden="true" />
+                            Copy
+                          </span>
+                        </button>
+
+                        <a
+                          href={project.shareUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hidden sm:inline-flex items-center justify-center rounded-xl bg-white px-3 py-2 text-sm font-semibold text-gray-800 ring-1 ring-gray-200 hover:bg-gray-50 transition"
+                          title="Open share link"
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                            Open
+                          </span>
+                        </a>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => copyShareLink(project.shareUrl)}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Copy share link"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </button>
-                    <Link
-                      href={`/app/projects/${project.id}`}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
+
+                  {/* Right actions */}
+                  <div className="flex sm:flex-col gap-2 sm:items-end">
+                    <Button href={`/app/projects/${project.id}`} variant="secondary">
+                      Open
+                    </Button>
+                    <Button href={`/app/projects/${project.id}`} >
+                      Manage
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -189,16 +258,10 @@ export default function ProjectsPage() {
         </div>
       ) : (
         <EmptyStateCard
-          icon={
-            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            </svg>
-          }
+          icon={<Files className="w-12 h-12" aria-hidden="true" />}
           title={search ? 'No projects found' : 'No projects yet'}
-          description={search ? 'Try a different search term' : 'Create your first project to get started'}
-          action={
-            !search && <Button href="/app/projects/new">Create Project</Button>
-          }
+          description={search ? 'Try a different search term.' : 'Create your first project to get started.'}
+          action={!search ? <Button href="/app/projects/new">Create project</Button> : undefined}
         />
       )}
     </div>

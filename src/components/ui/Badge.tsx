@@ -16,13 +16,13 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  gray: 'bg-gray-100 text-gray-800',
-  indigo: 'bg-indigo-100 text-indigo-800',
-  green: 'bg-green-100 text-green-800',
-  yellow: 'bg-yellow-100 text-yellow-800',
-  red: 'bg-red-100 text-red-800',
-  blue: 'bg-blue-100 text-blue-800',
-  purple: 'bg-purple-100 text-purple-800',
+  gray: 'bg-gray-100 text-gray-800 ring-gray-200',
+  indigo: 'bg-indigo-50 text-indigo-700 ring-indigo-200',
+  green: 'bg-green-50 text-green-700 ring-green-200',
+  yellow: 'bg-yellow-50 text-yellow-800 ring-yellow-200',
+  red: 'bg-red-50 text-red-700 ring-red-200',
+  blue: 'bg-blue-50 text-blue-700 ring-blue-200',
+  purple: 'bg-purple-50 text-purple-700 ring-purple-200',
 };
 
 const dotColors: Record<BadgeVariant, string> = {
@@ -37,8 +37,8 @@ const dotColors: Record<BadgeVariant, string> = {
 
 const sizeStyles: Record<BadgeSize, string> = {
   sm: 'px-2 py-0.5 text-xs',
-  md: 'px-2.5 py-0.5 text-xs',
-  lg: 'px-3 py-1 text-sm',
+  md: 'px-2.5 py-1 text-xs',
+  lg: 'px-3 py-1.5 text-sm',
 };
 
 export function Badge({
@@ -53,23 +53,21 @@ export function Badge({
   return (
     <span
       className={`
-        inline-flex items-center font-medium rounded-full
+        inline-flex items-center font-semibold rounded-full ring-1
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${className}
       `}
     >
       {dot && (
-        <span
-          className={`w-1.5 h-1.5 rounded-full mr-1.5 ${dotColors[variant]}`}
-        />
+        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${dotColors[variant]}`} />
       )}
       {children}
       {removable && onRemove && (
         <button
           type="button"
           onClick={onRemove}
-          className="ml-1 -mr-1 p-0.5 rounded-full hover:bg-black/10 transition-colors"
+          className="ml-1.5 -mr-0.5 p-0.5 rounded-full hover:bg-black/10 transition-colors"
           aria-label="Remove"
         >
           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">

@@ -1,22 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { APP_NAME } from '@/lib/config';
 import { Button } from '@/components/ui/Button';
+import { Check, Shield, Clock, UserRound } from 'lucide-react';
 
 const plans = [
   {
     id: 'solo',
     name: 'Solo',
-    description: 'Perfect for individual freelancers',
+    description: 'For individual freelancers',
     price: 19,
     tax: 3,
     total: 22,
     features: [
       'Unlimited projects',
       'Unlimited deliverables',
-      'Google Drive integration',
-      'Client portal',
+      'Client approval page',
+      'Comments + approvals',
       'Email notifications',
       'One user account',
     ],
@@ -36,7 +37,7 @@ const plans = [
       'Team collaboration',
       'Workspace branding',
       'Priority support',
-      'Advanced analytics',
+      'Advanced insights',
     ],
     cta: 'Get Studio',
     popular: true,
@@ -45,130 +46,131 @@ const plans = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl font-bold text-gray-900">
-            Simple, one-time pricing
+    <section id="pricing" className="bg-white py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto mb-12 max-w-3xl text-center">
+          <p className="text-sm font-semibold tracking-wider text-indigo-600">
+            One-time payment
+          </p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Simple pricing. No subscriptions.
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            No subscriptions. No hidden fees. Pay once, use forever.
+            Pay once and use {APP_NAME}. No monthly plans.
           </p>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`
-                relative bg-white rounded-2xl shadow-sm border-2 p-8
-                ${plan.popular ? 'border-indigo-600' : 'border-gray-200'}
-              `}
+              className={[
+                'relative rounded-3xl border p-7 shadow-sm',
+                plan.popular
+                  ? 'border-indigo-600 bg-indigo-50/40'
+                  : 'border-gray-200 bg-white',
+              ].join(' ')}
             >
-              {/* Popular Badge */}
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-indigo-600 text-white text-sm font-medium px-4 py-1 rounded-full">
-                    Most Popular
+                  <span className="rounded-full bg-indigo-600 px-4 py-1 text-sm font-semibold text-white">
+                    Most popular
                   </span>
                 </div>
               )}
 
-              {/* Plan Header */}
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
-                <p className="mt-2 text-gray-600">{plan.description}</p>
-                
-                <div className="mt-6">
-                  <span className="text-5xl font-bold text-gray-900">
-                    ${plan.price}
-                  </span>
-                  <span className="text-gray-500 ml-2">
-                    + ${plan.tax} tax
-                  </span>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                  <p className="mt-1 text-gray-600">{plan.description}</p>
                 </div>
-                <p className="mt-2 text-sm text-gray-500">
-                  One-time payment of ${plan.total}
+                <div className="text-right">
+                  <div className="text-4xl font-bold text-gray-900">${plan.price}</div>
+                  <div className="text-sm text-gray-500">+ ${plan.tax} tax</div>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-white/70 p-4 ring-1 ring-gray-200">
+                <p className="text-sm text-gray-700">
+                  One-time payment:{' '}
+                  <span className="font-semibold text-gray-900">${plan.total}</span>
                 </p>
               </div>
 
-              {/* Features */}
-              <ul className="space-y-4 mb-8">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <svg
-                      className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span className="text-gray-600">{feature}</span>
+              <ul className="mt-6 space-y-3">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-3">
+                    <Check className="mt-0.5 h-5 w-5 text-green-600" aria-hidden="true" />
+                    <span className="text-gray-700">{f}</span>
                   </li>
                 ))}
               </ul>
 
-              {/* CTA */}
-              <Button
-                href="/signup"
-                variant={plan.popular ? 'primary' : 'secondary'}
-                fullWidth
-                size="lg"
-              >
-                {plan.cta}
-              </Button>
+              <div className="mt-7">
+                <Button
+                  href="/signup"
+                  variant={plan.popular ? 'primary' : 'secondary'}
+                  fullWidth
+                  size="lg"
+                >
+                  {plan.cta}
+                </Button>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Upgrade Note */}
-        <div className="mt-12 text-center">
+        <div className="mt-10 text-center">
           <p className="text-gray-600">
             Already on Solo?{' '}
-            <span className="font-medium text-gray-900">
-              Upgrade to Studio for just $15
-            </span>
+            <span className="font-medium text-gray-900">Upgrade to Studio for $15</span>
           </p>
         </div>
 
         {/* FAQ */}
-        <div className="mt-20 max-w-3xl mx-auto">
+        <div className="mt-16 mx-auto max-w-3xl">
           <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">
-            Frequently Asked Questions
+            FAQ
           </h3>
-          
-          <div className="space-y-6">
+
+          <div className="space-y-4">
             {[
               {
-                q: 'Is this really a one-time payment?',
-                a: `Yes! ${APP_NAME} is a one-time purchase. No monthly fees, no annual renewals. Pay once and use it forever.`,
+                icon: UserRound,
+                q: 'Do clients need an account?',
+                a: 'No. Clients open the link, review, comment, and approve/request changes.',
               },
               {
-                q: 'Can I upgrade from Solo to Studio later?',
-                a: 'Absolutely! You can upgrade from Solo to Studio at any time for just $15 (no additional tax).',
+                icon: Shield,
+                q: 'Where are files stored?',
+                a: `${APP_NAME} stores uploaded files in its own storage for sharing and approvals. Ownership remains yours.`,
               },
               {
-                q: 'What happens to my files?',
-                a: 'All deliverables are stored in your Google Drive account. You maintain full control and ownership of your files.',
+                icon: Clock,
+                q: 'How long is data kept?',
+                a: 'Files and related project data are automatically deleted after 3 months.',
               },
               {
-                q: 'Is there a free trial?',
-                a: 'We offer a 14-day money-back guarantee. If you\'re not satisfied, we\'ll refund your purchase.',
+                icon: Shield,
+                q: 'Is this a subscription?',
+                a: 'No. It’s a one-time payment. No monthly renewals.',
               },
-            ].map((faq, index) => (
-              <div key={index} className="bg-white rounded-lg p-6 border border-gray-200">
-                <h4 className="font-semibold text-gray-900 mb-2">{faq.q}</h4>
-                <p className="text-gray-600">{faq.a}</p>
-              </div>
-            ))}
+            ].map((faq) => {
+              const Icon = faq.icon;
+              return (
+                <div key={faq.q} className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-gray-900 ring-1 ring-gray-200">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{faq.q}</h4>
+                      <p className="mt-2 text-gray-700">{faq.a}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

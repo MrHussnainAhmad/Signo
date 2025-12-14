@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { AuthLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Spinner } from '@/components/ui/Spinner';
+import { Mail, AlertCircle, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -18,6 +19,7 @@ export default function ForgotPasswordPage() {
     setError('');
 
     try {
+      // backend unchanged
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,7 +34,7 @@ export default function ForgotPasswordPage() {
       }
 
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -41,78 +43,103 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <AuthLayout
-        title="Check your email"
-        subtitle="We've sent you a password reset link"
-      >
+      <AuthLayout title="Check your email" subtitle="We sent a reset link if the account exists">
         <div className="text-center">
-          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg
-              className="w-8 h-8 text-indigo-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
+          <div className="mx-auto mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 ring-1 ring-indigo-200">
+            <CheckCircle2 className="h-7 w-7 text-indigo-700" aria-hidden="true" />
           </div>
-          <p className="text-gray-600 mb-6">
-            If an account exists with <strong className="text-gray-900">{email}</strong>, 
-            you'll receive a password reset link shortly.
+
+          <p className="text-gray-600">
+            If an account exists for{' '}
+            <span className="font-semibold text-gray-900 break-words">{email}</span>, you’ll receive
+            a password reset link.
           </p>
-          <Link
-            href="/login"
-            className="text-indigo-600 hover:text-indigo-700 font-medium"
-          >
-            Back to login
-          </Link>
+
+          <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-left">
+            <p className="text-sm font-semibold text-gray-900">Tip</p>
+            <p className="mt-1 text-sm text-gray-600">
+              Check spam/junk folders and search for “reset”.
+            </p>
+          </div>
+
+          <div className="mt-6">
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-indigo-700 ring-1 ring-gray-200 hover:bg-gray-50 transition w-full"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Back to login
+            </Link>
+          </div>
         </div>
       </AuthLayout>
     );
   }
 
   return (
-    <AuthLayout
-      title="Forgot password?"
-      subtitle="Enter your email to reset your password"
-    >
+    <AuthLayout title="Forgot password?" subtitle="Enter your email to get a reset link">
+      {/* Error */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 text-red-700" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-semibold text-red-900">Couldn’t send reset email</p>
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <Input
-          label="Email address"
-          type="email"
-          name="email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            setError('');
-          }}
-          placeholder="you@example.com"
-          required
-          autoComplete="email"
-        />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Email field (premium) */}
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-semibold text-gray-900">
+            Email address
+          </label>
 
-        <Button type="submit" fullWidth isLoading={isLoading}>
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+              <Mail className="h-5 w-5" aria-hidden="true" />
+            </div>
+
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError('');
+              }}
+              placeholder="you@example.com"
+              required
+              autoComplete="email"
+              className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-10 pr-3 text-gray-900 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+            />
+          </div>
+        </div>
+
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className={[
+            'w-full rounded-2xl px-4 py-3 font-semibold text-white',
+            'bg-indigo-600 hover:bg-indigo-700 transition',
+            'focus:outline-none focus:ring-4 focus:ring-indigo-200',
+            'disabled:opacity-60 disabled:cursor-not-allowed',
+            'inline-flex items-center justify-center gap-2',
+          ].join(' ')}
+        >
+          {isLoading ? <Spinner size="sm" /> : <Send className="h-4 w-4" aria-hidden="true" />}
           Send reset link
-        </Button>
+        </button>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-600">
         Remember your password?{' '}
-        <Link
-          href="/login"
-          className="text-indigo-600 hover:text-indigo-700 font-medium"
-        >
+        <Link href="/login" className="font-semibold text-indigo-700 hover:text-indigo-800">
           Log in
         </Link>
       </p>

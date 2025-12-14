@@ -18,16 +18,21 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800 border-transparent',
-  secondary: 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 active:bg-gray-100',
-  danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 border-transparent',
-  ghost: 'bg-transparent text-gray-600 hover:bg-gray-100 active:bg-gray-200 border-transparent',
-  link: 'bg-transparent text-indigo-600 hover:text-indigo-700 border-transparent p-0 underline-offset-4 hover:underline',
+  primary:
+    'bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800 ring-1 ring-indigo-600 hover:ring-indigo-700',
+  secondary:
+    'bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100 ring-1 ring-gray-200',
+  danger:
+    'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 ring-1 ring-red-600 hover:ring-red-700',
+  ghost:
+    'bg-transparent text-gray-600 hover:bg-gray-100 active:bg-gray-200 ring-0',
+  link:
+    'bg-transparent text-indigo-600 hover:text-indigo-700 ring-0 p-0 underline-offset-4 hover:underline',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2 text-sm',
+  sm: 'px-3 py-2 text-sm',
+  md: 'px-4 py-2.5 text-sm',
   lg: 'px-6 py-3 text-base',
 };
 
@@ -44,7 +49,8 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles =
+    'inline-flex items-center justify-center font-semibold rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const combinedClassName = `
     ${baseStyles}
@@ -93,11 +99,7 @@ export function Button({
   }
 
   return (
-    <button
-      className={combinedClassName}
-      disabled={disabled || isLoading}
-      {...props}
-    >
+    <button className={combinedClassName} disabled={disabled || isLoading} {...props}>
       {content}
     </button>
   );
@@ -111,6 +113,12 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   label: string;
 }
 
+const iconSizeStyles: Record<ButtonSize, string> = {
+  sm: 'p-1.5',
+  md: 'p-2',
+  lg: 'p-3',
+};
+
 export function IconButton({
   variant = 'ghost',
   size = 'md',
@@ -119,20 +127,14 @@ export function IconButton({
   className = '',
   ...props
 }: IconButtonProps) {
-  const sizeStyles: Record<ButtonSize, string> = {
-    sm: 'p-1',
-    md: 'p-2',
-    lg: 'p-3',
-  };
-
   return (
     <button
       className={`
-        inline-flex items-center justify-center rounded-lg transition-colors
+        inline-flex items-center justify-center rounded-xl transition-all
         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variantStyles[variant]}
-        ${sizeStyles[size]}
+        ${iconSizeStyles[size]}
         ${className}
       `}
       aria-label={label}

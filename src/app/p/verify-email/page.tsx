@@ -5,6 +5,73 @@ import { useSearchParams } from 'next/navigation';
 import { ClientAuthLayout } from '@/components/layout/ClientLayout';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
+import { CheckCircle2, XCircle, Mail } from 'lucide-react';
+
+function StatusCard({
+  variant,
+  title,
+  message,
+  action,
+}: {
+  variant: 'loading' | 'success' | 'error';
+  title: string;
+  message: string;
+  action?: React.ReactNode;
+}) {
+  const styles =
+    variant === 'success'
+      ? {
+          wrap: 'border-green-200 bg-green-50',
+          iconWrap: 'bg-green-100 text-green-700 ring-green-200',
+          Icon: CheckCircle2,
+        }
+      : variant === 'error'
+        ? {
+            wrap: 'border-red-200 bg-red-50',
+            iconWrap: 'bg-red-100 text-red-700 ring-red-200',
+            Icon: XCircle,
+          }
+        : {
+            wrap: 'border-gray-200 bg-gray-50',
+            iconWrap: 'bg-white text-gray-700 ring-gray-200',
+            Icon: Mail,
+          };
+
+  const Icon = styles.Icon;
+
+  return (
+    <div className="text-center">
+      <div
+        className={[
+          'mx-auto mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl ring-1',
+          styles.iconWrap,
+        ].join(' ')}
+      >
+        <Icon className="h-7 w-7" aria-hidden="true" />
+      </div>
+
+      <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+      <p className="mt-2 text-gray-600">{message}</p>
+
+      <div className={['mt-6 rounded-2xl border p-4', styles.wrap].join(' ')}>
+        {variant === 'loading' ? (
+          <div className="flex items-center justify-center gap-3">
+            <Spinner size="sm" />
+            <span className="text-sm font-medium text-gray-700">Verifying…</span>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-700">
+            {variant === 'success'
+              ? 'You can continue to the client portal.'
+              : 'You can go back to login and try again.'}
+          </p>
+        )}
+      </div>
+
+      {action && <div className="mt-6">{action}</div>}
+    </div>
+  );
+}
 
 function ClientVerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -23,18 +90,17 @@ function ClientVerifyEmailContent() {
 
     async function verifyEmail() {
       try {
+        // backend logic unchanged (same endpoint + token query)
         const response = await fetch(`/api/client/auth/verify-email?token=${token}`);
         const data = await response.json();
 
         if (response.ok && data.success) {
           setStatus('success');
-          setMessage(data.data.message);
-          if (data.data.redirectTo) {
-            setRedirectTo(data.data.redirectTo);
-          }
+          setMessage(data?.data?.message || 'Your email has been verified.');
+          if (data?.data?.redirectTo) setRedirectTo(data.data.redirectTo);
         } else {
           setStatus('error');
-          setMessage(data.error || 'Verification failed');
+          setMessage(data?.error || 'Verification failed');
         }
       } catch {
         setStatus('error');
@@ -48,10 +114,11 @@ function ClientVerifyEmailContent() {
   if (status === 'loading') {
     return (
       <ClientAuthLayout>
-        <div className="text-center py-8">
-          <Spinner size="lg" className="mx-auto" />
-          <p className="mt-4 text-gray-600">Verifying your email...</p>
-        </div>
+        <StatusCard
+          variant="loading"
+          title="Verify your email"
+          message="We’re confirming your email verification."
+        />
       </ClientAuthLayout>
     );
   }
@@ -59,67 +126,45 @@ function ClientVerifyEmailContent() {
   if (status === 'success') {
     return (
       <ClientAuthLayout>
-        <div className="text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg
-              className="w-8 h-8 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Email Verified!</h1>
-          <p className="text-gray-600 mb-6">{message}</p>
-          <Button href={redirectTo} fullWidth>
-            Continue
-          </Button>
-        </div>
+        <StatusCard
+          variant="success"
+          title="Email verified"
+          message={message}
+          action={
+            <Button href={redirectTo} fullWidth>
+              Continue
+            </Button>
+          }
+        />
       </ClientAuthLayout>
     );
   }
 
   return (
     <ClientAuthLayout>
-      <div className="text-center">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg
-            className="w-8 h-8 text-red-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Verification Failed</h1>
-        <p className="text-gray-600 mb-6">{message}</p>
-        <Button href="/p/login" fullWidth>
-          Back to Login
-        </Button>
-      </div>
+      <StatusCard
+        variant="error"
+        title="Verification failed"
+        message={message}
+        action={
+          <Button href="/p/login" fullWidth>
+            Back to login
+          </Button>
+        }
+      />
     </ClientAuthLayout>
   );
 }
 
 export default function ClientVerifyEmailPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Spinner size="lg" />
+        </div>
+      }
+    >
       <ClientVerifyEmailContent />
     </Suspense>
   );

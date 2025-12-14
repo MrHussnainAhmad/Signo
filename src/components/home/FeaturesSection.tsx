@@ -2,150 +2,167 @@
 
 import React from 'react';
 import { APP_NAME } from '@/lib/config';
+import {
+  BadgeCheck,
+  MessageSquareText,
+  Link2,
+  Bell,
+  Files,
+  Shield,
+  Clock,
+} from 'lucide-react';
 
-const features = [
+const bento = [
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-      </svg>
-    ),
-    title: 'Google Drive Storage',
-    description: 'Deliverables are securely stored in Google Drive. No file size limits, no storage worries.',
+    icon: Link2,
+    title: 'One client link',
+    description:
+      'Send a single review link. Clients open it and respond without a complicated workflow.',
+    className: 'md:col-span-2',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-      </svg>
-    ),
-    title: 'Shareable Links',
-    description: 'Generate unique client links for each project. No client login required to view.',
+    icon: BadgeCheck,
+    title: 'Approve / Request changes',
+    description:
+      'A clear decision button instead of “I guess it’s ok” messages scattered everywhere.',
+    className: 'md:col-span-1',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-      </svg>
-    ),
-    title: 'Client Comments',
-    description: 'Clients can leave feedback directly on projects. All communication in one place.',
+    icon: MessageSquareText,
+    title: 'Feedback stays together',
+    description:
+      'Comments live with the deliverables so you can track decisions and changes cleanly.',
+    className: 'md:col-span-1',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    title: 'One-Click Approval',
-    description: 'Clients approve with a single click. No more chasing emails for sign-off.',
+    icon: Files,
+    title: 'Version clarity',
+    description:
+      'Keep revisions understandable (v1, v2, v3) so nobody argues about what’s “latest.”',
+    className: 'md:col-span-1',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-    ),
-    title: 'Email Notifications',
-    description: 'Get notified when clients comment, approve, or request changes.',
+    icon: Bell,
+    title: 'Instant notifications',
+    description:
+      'Know when clients comment, approve, or request changes—no manual checking.',
+    className: 'md:col-span-1',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    ),
-    title: 'Team Collaboration',
-    description: 'Invite team members to collaborate on projects. Studio plan supports up to 5 users.',
+    icon: Shield,
+    title: 'Secure hosting',
+    description:
+      'Files are stored in Signo storage for sharing and approvals. Ownership remains yours.',
+    className: 'md:col-span-1',
+  },
+];
+
+const steps = [
+  {
+    step: '01',
+    title: 'Create a project',
+    description: 'Add project name + client email.',
+  },
+  {
+    step: '02',
+    title: 'Upload deliverables',
+    description: 'Add files to the project in seconds.',
+  },
+  {
+    step: '03',
+    title: 'Share the link',
+    description: 'Client reviews on a clean page.',
+  },
+  {
+    step: '04',
+    title: 'Get a decision',
+    description: 'Approve or request changes with a record.',
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="features" className="bg-white py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl font-bold text-gray-900">
-            Everything you need to manage client approvals
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-semibold tracking-wider text-indigo-600">
+            Built for fast approvals
+          </p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            A client approval flow that feels effortless
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            {APP_NAME} provides all the tools freelancers and agencies need to streamline 
-            their approval workflow.
+            {APP_NAME} is not a project management suite. It’s a simple approval page
+            for deliverables—with clear feedback and clear sign-off.
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="relative p-6 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors"
-            >
-              <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 mb-4">
-                {feature.icon}
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-gray-600">
-                {feature.description}
+        {/* Retention banner */}
+        <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-gray-200 bg-gray-50 p-5">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-gray-900 ring-1 ring-gray-200">
+              <Clock className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-900">Automatic data cleanup</p>
+              <p className="mt-1 text-sm text-gray-600">
+                For safety and simplicity, files and related data are automatically deleted after{' '}
+                <span className="font-medium text-gray-900">3 months</span>.
               </p>
             </div>
-          ))}
+          </div>
         </div>
 
-        {/* How It Works */}
-        <div className="mt-24">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold text-gray-900">
+        {/* Bento grid */}
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {bento.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.title}
+                className={[
+                  'group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition',
+                  'hover:-translate-y-0.5 hover:shadow-md',
+                  item.className,
+                ].join(' ')}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100">
+                    <Icon className="h-6 w-6" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 text-gray-600">{item.description}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* How it works */}
+        <div className="mt-20">
+          <div className="mx-auto mb-10 max-w-3xl text-center">
+            <h3 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
               How it works
-            </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Get up and running in minutes with our simple workflow.
+            </h3>
+            <p className="mt-3 text-gray-600">
+              Simple steps. No training for clients.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {[
-              {
-                step: '1',
-                title: 'Create Project',
-                description: 'Add your project details and client information.',
-              },
-              {
-                step: '2',
-                title: 'Upload Files',
-                description: 'Upload deliverables directly to Google Drive.',
-              },
-              {
-                step: '3',
-                title: 'Share Link',
-                description: 'Send the unique project link to your client.',
-              },
-              {
-                step: '4',
-                title: 'Get Approval',
-                description: 'Client reviews, comments, and approves.',
-              },
-            ].map((item, index) => (
-              <div key={index} className="text-center">
-                <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">
-                  {item.step}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {item.title}
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  {item.description}
-                </p>
-                {index < 3 && (
-                  <div className="hidden md:block absolute top-6 left-full w-full">
-                    <svg className="w-full h-2 text-gray-200" fill="currentColor">
-                      <line x1="0" y1="50%" x2="100%" y2="50%" stroke="currentColor" strokeWidth="2" strokeDasharray="8 4" />
-                    </svg>
-                  </div>
-                )}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+            {steps.map((s) => (
+              <div
+                key={s.step}
+                className="rounded-2xl border border-gray-200 bg-gray-50 p-6"
+              >
+                <div className="text-sm font-semibold text-indigo-600">{s.step}</div>
+                <div className="mt-2 text-lg font-semibold text-gray-900">{s.title}</div>
+                <p className="mt-2 text-sm text-gray-600">{s.description}</p>
               </div>
             ))}
           </div>

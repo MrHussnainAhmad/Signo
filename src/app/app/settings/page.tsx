@@ -1,16 +1,29 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Avatar } from '@/components/ui/Avatar';
-import { RoleBadge, PlanBadge } from '@/components/ui/Badge';
+import { Badge, RoleBadge, PlanBadge } from '@/components/ui/Badge'; // ✅ FIX: import Badge
 import { FileUpload } from '@/components/ui/FileUpload';
 import { ConfirmModal, Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Spinner';
+import {
+  UserRound,
+  Shield,
+  Building2,
+  Users,
+  Mail,
+  Trash2,
+  PencilLine,
+  KeyRound,
+  Upload,
+  Settings as SettingsIcon,
+  LockKeyhole,
+} from 'lucide-react';
 
 interface User {
   id: string;
@@ -67,10 +80,12 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetchData() {
     try {
+      // backend unchanged
       const [profileRes, workspaceRes, membersRes] = await Promise.all([
         fetch('/api/settings/profile'),
         fetch('/api/settings/workspace'),
@@ -94,7 +109,7 @@ export default function SettingsPage() {
       if (membersData.success) {
         setMembers(membersData.data.members);
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to load settings');
     } finally {
       setIsLoading(false);
@@ -106,6 +121,7 @@ export default function SettingsPage() {
     setIsSavingProfile(true);
 
     try {
+      // backend unchanged
       const response = await fetch('/api/settings/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -120,7 +136,7 @@ export default function SettingsPage() {
       } else {
         showError('Error', data.error || 'Failed to update profile');
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to update profile');
     } finally {
       setIsSavingProfile(false);
@@ -132,6 +148,7 @@ export default function SettingsPage() {
     setIsSavingWorkspace(true);
 
     try {
+      // backend unchanged
       const response = await fetch('/api/settings/workspace', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -141,12 +158,12 @@ export default function SettingsPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setWorkspace((prev) => prev ? { ...prev, name: workspaceName } : null);
+        setWorkspace((prev) => (prev ? { ...prev, name: workspaceName } : null));
         success('Workspace Updated', 'Workspace settings have been saved');
       } else {
         showError('Error', data.error || 'Failed to update workspace');
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to update workspace');
     } finally {
       setIsSavingWorkspace(false);
@@ -158,6 +175,7 @@ export default function SettingsPage() {
     setIsSavingPassword(true);
 
     try {
+      // backend unchanged
       const response = await fetch('/api/settings/password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -173,7 +191,7 @@ export default function SettingsPage() {
       } else {
         showError('Error', data.error || 'Failed to change password');
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to change password');
     } finally {
       setIsSavingPassword(false);
@@ -185,6 +203,7 @@ export default function SettingsPage() {
     setIsInviting(true);
 
     try {
+      // backend unchanged
       const response = await fetch('/api/invites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -194,13 +213,14 @@ export default function SettingsPage() {
       const data = await response.json();
 
       if (response.ok) {
+        const sentTo = inviteEmail;
         setInviteEmail('');
         setShowInviteModal(false);
-        success('Invite Sent', `Invitation sent to ${inviteEmail}`);
+        success('Invite Sent', `Invitation sent to ${sentTo}`);
       } else {
         showError('Error', data.error || 'Failed to send invite');
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to send invite');
     } finally {
       setIsInviting(false);
@@ -211,6 +231,7 @@ export default function SettingsPage() {
     if (!memberToRemove) return;
 
     try {
+      // backend unchanged
       const response = await fetch(`/api/settings/members?memberId=${memberToRemove.id}`, {
         method: 'DELETE',
       });
@@ -219,7 +240,7 @@ export default function SettingsPage() {
         setMembers((prev) => prev.filter((m) => m.id !== memberToRemove.id));
         success('Member Removed', `${memberToRemove.user.name} has been removed`);
       }
-    } catch (error) {
+    } catch {
       showError('Error', 'Failed to remove member');
     } finally {
       setMemberToRemove(null);
@@ -230,6 +251,7 @@ export default function SettingsPage() {
     const formData = new FormData();
     formData.append('file', file);
 
+    // backend unchanged
     const response = await fetch('/api/upload/avatar', {
       method: 'POST',
       body: formData,
@@ -245,183 +267,320 @@ export default function SettingsPage() {
     }
   }
 
+  const showWorkspaceSection = !!workspace?.isOwner;
+  const showTeamSection = workspace?.plan === 'STUDIO';
+
+  const sectionLinks = useMemo(() => {
+    const links: Array<{ id: string; label: string; icon: React.ReactNode }> = [
+      { id: 'profile', label: 'Profile', icon: <UserRound className="h-4 w-4" aria-hidden="true" /> },
+      { id: 'security', label: 'Security', icon: <Shield className="h-4 w-4" aria-hidden="true" /> },
+    ];
+
+    if (showWorkspaceSection) {
+      links.push({
+        id: 'workspace',
+        label: 'Workspace',
+        icon: <Building2 className="h-4 w-4" aria-hidden="true" />,
+      });
+    }
+    if (showTeamSection) {
+      links.push({ id: 'team', label: 'Team', icon: <Users className="h-4 w-4" aria-hidden="true" /> });
+    }
+
+    return links;
+  }, [showTeamSection, showWorkspaceSection]);
+
   if (isLoading) {
     return (
       <div>
         <div className="mb-8">
           <Skeleton width={200} height={32} className="mb-2" />
-          <Skeleton width={300} height={20} />
+          <Skeleton width={360} height={20} />
         </div>
-        <div className="space-y-6">
-          <Skeleton height={200} className="rounded-xl" />
-          <Skeleton height={200} className="rounded-xl" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-4">
+            <Skeleton height={220} className="rounded-2xl" />
+          </div>
+          <div className="lg:col-span-8 space-y-6">
+            <Skeleton height={260} className="rounded-2xl" />
+            <Skeleton height={240} className="rounded-2xl" />
+            <Skeleton height={260} className="rounded-2xl" />
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl">
-      <PageHeader
-        title="Settings"
-        description="Manage your account and workspace settings"
-      />
+    <div className="max-w-6xl">
+      <PageHeader title="Settings" description="Manage your account and workspace settings" />
 
-      {/* Profile Settings */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Your personal account settings</CardDescription>
-        </CardHeader>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left column */}
+        <div className="lg:col-span-4 space-y-6">
+          <Card>
+            <div className="flex items-start gap-4">
+              <Avatar src={user?.avatarUrl} name={user?.name || ''} size="xl" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-gray-500">Signed in as</p>
+                <p className="mt-1 text-lg font-semibold text-gray-900 truncate">
+                  {user?.name || '—'}
+                </p>
+                <p className="mt-1 text-sm text-gray-600 truncate">
+                  {user?.email || '—'}
+                </p>
 
-        <div className="flex items-start gap-6 mb-6">
-          <Avatar src={user?.avatarUrl} name={user?.name || ''} size="xl" />
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Profile Picture</h4>
+                {workspace && (
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <PlanBadge plan={workspace.plan} />
+                    <Badge variant="gray">{workspace.name}</Badge>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <SettingsIcon className="h-4 w-4 text-gray-500" aria-hidden="true" />
+                Quick navigation
+              </p>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
+                {sectionLinks.map((l) => (
+                  <a
+                    key={l.id}
+                    href={`#${l.id}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50 transition"
+                  >
+                    {l.icon}
+                    {l.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                Profile photo
+              </CardTitle>
+              <CardDescription>Upload a new avatar image</CardDescription>
+            </CardHeader>
+
             <FileUpload
               onUpload={handleAvatarUpload}
               accept="image/*"
               maxSize={5 * 1024 * 1024}
-              label="Upload new image"
-              hint="JPG, PNG or GIF. Max 5MB."
+              label="Upload image"
+              hint="JPG, PNG, or GIF. Max 5MB."
             />
-          </div>
+          </Card>
         </div>
 
-        <form onSubmit={handleSaveProfile} className="space-y-4">
-          <Input
-            label="Name"
-            value={profileName}
-            onChange={(e) => setProfileName(e.target.value)}
-            required
-          />
-          <Input
-            label="Email"
-            value={user?.email || ''}
-            disabled
-            hint="Contact support to change your email"
-          />
-          <Button type="submit" isLoading={isSavingProfile}>
-            Save Changes
-          </Button>
-        </form>
-      </Card>
+        {/* Right column */}
+        <div className="lg:col-span-8 space-y-6">
+          <section id="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserRound className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                  Profile
+                </CardTitle>
+                <CardDescription>Your personal account settings</CardDescription>
+              </CardHeader>
 
-      {/* Password */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Password</CardTitle>
-          <CardDescription>Change your account password</CardDescription>
-        </CardHeader>
+              <form onSubmit={handleSaveProfile} className="space-y-4">
+                <Input
+                  label="Name"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  required
+                />
+                <Input
+                  label="Email"
+                  value={user?.email || ''}
+                  disabled
+                  hint="Contact support to change your email"
+                />
 
-        <form onSubmit={handleChangePassword} className="space-y-4">
-          <Input
-            label="Current Password"
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            required
-          />
-          <Input
-            label="New Password"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            hint="At least 8 characters with uppercase, lowercase, and number"
-            required
-          />
-          <Button type="submit" isLoading={isSavingPassword}>
-            Change Password
-          </Button>
-        </form>
-      </Card>
-
-      {/* Workspace Settings */}
-      {workspace?.isOwner && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Workspace</CardTitle>
-            <CardDescription>Manage your workspace settings</CardDescription>
-          </CardHeader>
-
-          <form onSubmit={handleSaveWorkspace} className="space-y-4">
-            <Input
-              label="Workspace Name"
-              value={workspaceName}
-              onChange={(e) => setWorkspaceName(e.target.value)}
-              required
-            />
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">Plan:</span>
-              <PlanBadge plan={workspace.plan} />
-            </div>
-            <Button type="submit" isLoading={isSavingWorkspace}>
-              Save Changes
-            </Button>
-          </form>
-        </Card>
-      )}
-
-      {/* Team Members */}
-      {workspace?.plan === 'STUDIO' && (
-        <Card>
-          <CardHeader
-            action={
-              workspace.isOwner && (
-                <Button onClick={() => setShowInviteModal(true)} size="sm">
-                  Invite Member
-                </Button>
-              )
-            }
-          >
-            <CardTitle>Team Members</CardTitle>
-            <CardDescription>Manage your team</CardDescription>
-          </CardHeader>
-
-          <div className="space-y-3">
-            {members.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar src={member.user.avatarUrl} name={member.user.name} size="md" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">{member.user.name}</span>
-                      {member.isCurrentUser && (
-                        <span className="text-xs text-gray-500">(you)</span>
-                      )}
-                      <RoleBadge role={member.role} />
-                    </div>
-                    <p className="text-sm text-gray-500">{member.user.email}</p>
-                  </div>
-                </div>
-                {member.canRemove && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setMemberToRemove(member)}
-                  >
-                    Remove
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+                  <Button type="submit" isLoading={isSavingProfile}>
+                    <span className="inline-flex items-center gap-2">
+                      <PencilLine className="h-4 w-4" aria-hidden="true" />
+                      Save profile
+                    </span>
                   </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+                </div>
+              </form>
+            </Card>
+          </section>
+
+          <section id="security">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                  Security
+                </CardTitle>
+                <CardDescription>Change your account password</CardDescription>
+              </CardHeader>
+
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                <Input
+                  label="Current password"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                />
+                <Input
+                  label="New password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  hint="At least 8 characters with uppercase, lowercase, and number"
+                  required
+                />
+
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+                  <Button type="submit" isLoading={isSavingPassword}>
+                    <span className="inline-flex items-center gap-2">
+                      <KeyRound className="h-4 w-4" aria-hidden="true" />
+                      Update password
+                    </span>
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </section>
+
+          {workspace?.isOwner && (
+            <section id="workspace">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                    Workspace
+                  </CardTitle>
+                  <CardDescription>Manage your workspace settings</CardDescription>
+                </CardHeader>
+
+                <form onSubmit={handleSaveWorkspace} className="space-y-4">
+                  <Input
+                    label="Workspace name"
+                    value={workspaceName}
+                    onChange={(e) => setWorkspaceName(e.target.value)}
+                    required
+                  />
+
+                  <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Current plan</p>
+                      <p className="mt-1 text-sm text-gray-600">
+                        Your plan affects team member limits and collaboration features.
+                      </p>
+                    </div>
+                    <PlanBadge plan={workspace.plan} size="lg" />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+                    <Button type="submit" isLoading={isSavingWorkspace}>
+                      <span className="inline-flex items-center gap-2">
+                        <PencilLine className="h-4 w-4" aria-hidden="true" />
+                        Save workspace
+                      </span>
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+            </section>
+          )}
+
+          {workspace?.plan === 'STUDIO' && (
+            <section id="team">
+              <Card>
+                <CardHeader
+                  action={
+                    workspace.isOwner && (
+                      <Button onClick={() => setShowInviteModal(true)} size="sm">
+                        <span className="inline-flex items-center gap-2">
+                          <Mail className="h-4 w-4" aria-hidden="true" />
+                          Invite
+                        </span>
+                      </Button>
+                    )
+                  }
+                >
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                    Team members
+                  </CardTitle>
+                  <CardDescription>Manage your team</CardDescription>
+                </CardHeader>
+
+                <div className="space-y-3">
+                  {members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-gray-200 bg-white p-4"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar src={member.user.avatarUrl} name={member.user.name} size="md" />
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-semibold text-gray-900 truncate">
+                              {member.user.name}
+                            </span>
+                            {member.isCurrentUser && (
+                              <span className="text-xs text-gray-500">(you)</span>
+                            )}
+                            <RoleBadge role={member.role} />
+                          </div>
+                          <p className="text-sm text-gray-600 truncate">{member.user.email}</p>
+                        </div>
+                      </div>
+
+                      {member.canRemove ? (
+                        <Button variant="ghost" size="sm" onClick={() => setMemberToRemove(member)}>
+                          <span className="inline-flex items-center gap-2 text-red-700">
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                            Remove
+                          </span>
+                        </Button>
+                      ) : (
+                        <div className="text-sm text-gray-400 sm:text-right">
+                          {member.isCurrentUser ? (
+                            <span className="inline-flex items-center gap-2">
+                              <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                              Protected
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </section>
+          )}
+        </div>
+      </div>
 
       {/* Invite Modal */}
       <Modal
         isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}
-        title="Invite Team Member"
+        title="Invite team member"
         description="Send an invitation to join your workspace"
       >
         <form onSubmit={handleInviteMember}>
           <Input
-            label="Email Address"
+            label="Email address"
             type="email"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
@@ -430,16 +589,11 @@ export default function SettingsPage() {
             className="mb-6"
           />
           <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setShowInviteModal(false)}
-              fullWidth
-            >
+            <Button type="button" variant="secondary" onClick={() => setShowInviteModal(false)} fullWidth>
               Cancel
             </Button>
             <Button type="submit" isLoading={isInviting} fullWidth>
-              Send Invite
+              Send invite
             </Button>
           </div>
         </form>
@@ -450,7 +604,7 @@ export default function SettingsPage() {
         isOpen={!!memberToRemove}
         onClose={() => setMemberToRemove(null)}
         onConfirm={handleRemoveMember}
-        title="Remove Member"
+        title="Remove member"
         message={`Are you sure you want to remove ${memberToRemove?.user.name} from your workspace?`}
         confirmText="Remove"
         variant="danger"

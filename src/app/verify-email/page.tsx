@@ -5,6 +5,81 @@ import { useSearchParams } from 'next/navigation';
 import { AuthLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
+import { CheckCircle2, Info, XCircle, Mail } from 'lucide-react';
+
+function Panel({
+  tone,
+  title,
+  message,
+  actions,
+}: {
+  tone: 'loading' | 'success' | 'info' | 'error';
+  title: string;
+  message: string;
+  actions?: React.ReactNode;
+}) {
+  const toneStyles =
+    tone === 'success'
+      ? {
+          wrap: 'border-green-200 bg-green-50',
+          iconWrap: 'bg-green-100 text-green-700 ring-green-200',
+          Icon: CheckCircle2,
+        }
+      : tone === 'info'
+        ? {
+            wrap: 'border-blue-200 bg-blue-50',
+            iconWrap: 'bg-blue-100 text-blue-700 ring-blue-200',
+            Icon: Info,
+          }
+        : tone === 'error'
+          ? {
+              wrap: 'border-red-200 bg-red-50',
+              iconWrap: 'bg-red-100 text-red-700 ring-red-200',
+              Icon: XCircle,
+            }
+          : {
+              wrap: 'border-gray-200 bg-gray-50',
+              iconWrap: 'bg-white text-gray-700 ring-gray-200',
+              Icon: Mail,
+            };
+
+  const Icon = toneStyles.Icon;
+
+  return (
+    <div className="text-center">
+      <div
+        className={[
+          'mx-auto mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl ring-1',
+          toneStyles.iconWrap,
+        ].join(' ')}
+      >
+        <Icon className="h-7 w-7" aria-hidden="true" />
+      </div>
+
+      <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+      <p className="mt-2 text-gray-600">{message}</p>
+
+      <div className={['mt-6 rounded-2xl border p-4', toneStyles.wrap].join(' ')}>
+        {tone === 'loading' ? (
+          <div className="flex items-center justify-center gap-3">
+            <Spinner size="sm" />
+            <span className="text-sm font-medium text-gray-700">Verifying…</span>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-700">
+            {tone === 'success'
+              ? 'Your email is verified and your account is ready.'
+              : tone === 'info'
+                ? 'If you already verified, you can log in now.'
+                : 'You can try again or go back to login.'}
+          </p>
+        )}
+      </div>
+
+      {actions && <div className="mt-6 space-y-3">{actions}</div>}
+    </div>
+  );
+}
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -22,6 +97,7 @@ function VerifyEmailContent() {
 
     async function verifyEmail() {
       try {
+        // backend logic unchanged (same endpoint + token query)
         const response = await fetch(`/api/auth/verify-email?token=${token}`);
         const data = await response.json();
 
@@ -30,10 +106,13 @@ function VerifyEmailContent() {
           setMessage(data.data.message);
         } else {
           const errorMessage = data.error || 'Verification failed';
-          
+
+          // keep your exact logic
           if (errorMessage.includes('Invalid') || errorMessage.includes('expired')) {
             setStatus('already_verified');
-            setMessage('This verification link has already been used or has expired. If you already verified your email, you can log in now.');
+            setMessage(
+              'This verification link has already been used or has expired. If you already verified your email, you can log in now.'
+            );
           } else {
             setStatus('error');
             setMessage(errorMessage);
@@ -50,115 +129,85 @@ function VerifyEmailContent() {
 
   if (status === 'loading') {
     return (
-      <AuthLayout title="Verifying your email..." subtitle="Please wait">
-        <div className="flex flex-col items-center py-8">
-          <Spinner size="lg" />
-          <p className="mt-4 text-gray-600">Verifying your email address...</p>
-        </div>
+      <AuthLayout title="Verify email" subtitle="Confirming your account">
+        <Panel
+          tone="loading"
+          title="Verifying email"
+          message="We’re confirming your email verification."
+        />
       </AuthLayout>
     );
   }
 
   if (status === 'success') {
     return (
-      <AuthLayout title="Email Verified!" subtitle="Your account is ready">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg
-              className="w-8 h-8 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <p className="text-gray-600 mb-6">{message}</p>
-          <Button href="/login?verified=true" fullWidth>
-            Continue to Login
-          </Button>
-        </div>
+      <AuthLayout title="Email verified" subtitle="Your account is ready">
+        <Panel
+          tone="success"
+          title="Email verified"
+          message={message}
+          actions={
+            <Button href="/login?verified=true" fullWidth>
+              Continue to login
+            </Button>
+          }
+        />
       </AuthLayout>
     );
   }
 
   if (status === 'already_verified') {
     return (
-      <AuthLayout title="Link Already Used" subtitle="This link has been used">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg
-              className="w-8 h-8 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <p className="text-gray-600 mb-6">{message}</p>
-          <div className="space-y-3">
-            <Button href="/login" fullWidth>
-              Go to Login
-            </Button>
-            <Button href="/signup" variant="secondary" fullWidth>
-              Create New Account
-            </Button>
-          </div>
-        </div>
+      <AuthLayout title="Link already used" subtitle="You can log in">
+        <Panel
+          tone="info"
+          title="Link already used"
+          message={message}
+          actions={
+            <>
+              <Button href="/login" fullWidth>
+                Go to login
+              </Button>
+              <Button href="/signup" variant="secondary" fullWidth>
+                Create new account
+              </Button>
+            </>
+          }
+        />
       </AuthLayout>
     );
   }
 
   return (
-    <AuthLayout title="Verification Failed" subtitle="Something went wrong">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg
-            className="w-8 h-8 text-red-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </div>
-        <p className="text-gray-600 mb-6">{message}</p>
-        <div className="space-y-3">
-          <Button href="/signup" variant="secondary" fullWidth>
-            Try Again
-          </Button>
-          <Button href="/login" fullWidth>
-            Back to Login
-          </Button>
-        </div>
-      </div>
+    <AuthLayout title="Verification failed" subtitle="Something went wrong">
+      <Panel
+        tone="error"
+        title="Verification failed"
+        message={message}
+        actions={
+          <>
+            <Button href="/signup" variant="secondary" fullWidth>
+              Try again
+            </Button>
+            <Button href="/login" fullWidth>
+              Back to login
+            </Button>
+          </>
+        }
+      />
     </AuthLayout>
   );
 }
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Spinner size="lg" />
+        </div>
+      }
+    >
       <VerifyEmailContent />
     </Suspense>
   );

@@ -1,18 +1,24 @@
 import { APP_NAME } from '@/lib/config';
 
-// Signo Brand Colors
+// Premium Brand Colors - Refined palette
 const BRAND = {
-  primary: '#6366f1', // Indigo
-  primaryDark: '#4f46e5',
-  background: '#f8fafc',
-  text: '#1e293b',
-  textMuted: '#64748b',
-  border: '#e2e8f0',
-  success: '#10b981',
-  white: '#ffffff',
+  primary: '#4f46e5', // Deep Indigo
+  primaryLight: '#6366f1',
+  background: '#fafafa',
+  cardBg: '#ffffff',
+  text: '#18181b',
+  textSecondary: '#52525b',
+  textMuted: '#a1a1aa',
+  border: '#e4e4e7',
+  borderLight: '#f4f4f5',
+  success: '#059669',
+  successBg: '#ecfdf5',
+  warning: '#d97706',
+  warningBg: '#fffbeb',
+  accent: '#f4f4f5',
 };
 
-// Base email layout wrapper
+// Premium email layout wrapper
 function emailLayout(content: string, previewText: string): string {
   return `
 <!DOCTYPE html>
@@ -36,53 +42,63 @@ function emailLayout(content: string, previewText: string): string {
     table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
     a { color: ${BRAND.primary}; text-decoration: none; }
-    a:hover { color: ${BRAND.primaryDark}; }
-    .button { display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white} !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; }
-    .button:hover { background-color: ${BRAND.primaryDark}; }
     @media only screen and (max-width: 600px) {
-      .container { width: 100% !important; padding: 20px !important; }
-      .content { padding: 24px !important; }
+      .container { width: 100% !important; padding: 16px !important; }
+      .content { padding: 32px 24px !important; }
+      .header { padding: 24px 24px 0 !important; }
     }
   </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: ${BRAND.background}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: ${BRAND.background}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
   <!-- Preview text -->
-  <div style="display: none; max-height: 0; overflow: hidden;">
+  <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: ${BRAND.background};">
     ${previewText}
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
   </div>
   
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.background};">
     <tr>
-      <td style="padding: 40px 20px;">
-        <table class="container" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; max-width: 600px;">
+      <td style="padding: 48px 24px;">
+        <table class="container" role="presentation" cellspacing="0" cellpadding="0" border="0" width="520" style="margin: 0 auto; max-width: 520px;">
+          
           <!-- Header -->
           <tr>
-            <td style="text-align: center; padding-bottom: 32px;">
-              <h1 style="margin: 0; font-size: 32px; font-weight: 700; color: ${BRAND.primary}; letter-spacing: -0.5px;">
-                ${APP_NAME}
-              </h1>
+            <td class="header" style="padding: 0 0 40px 0;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td>
+                    <span style="font-size: 20px; font-weight: 700; color: ${BRAND.text}; letter-spacing: -0.3px;">${APP_NAME}</span>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           
           <!-- Content Card -->
           <tr>
-            <td class="content" style="background-color: ${BRAND.white}; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+            <td class="content" style="background-color: ${BRAND.cardBg}; border-radius: 12px; padding: 48px 40px; border: 1px solid ${BRAND.border};">
               ${content}
             </td>
           </tr>
           
           <!-- Footer -->
           <tr>
-            <td style="text-align: center; padding-top: 32px;">
-              <p style="margin: 0; font-size: 14px; color: ${BRAND.textMuted};">
-                © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.
-              </p>
-              <p style="margin: 8px 0 0; font-size: 13px; color: ${BRAND.textMuted};">
-                You're receiving this email because you signed up for ${APP_NAME}.
-              </p>
+            <td style="padding: 32px 0 0 0;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="border-top: 1px solid ${BRAND.borderLight}; padding-top: 24px;">
+                    <p style="margin: 0 0 8px; font-size: 13px; color: ${BRAND.textMuted}; line-height: 1.5;">
+                      © ${new Date().getFullYear()} ${APP_NAME}
+                    </p>
+                    <p style="margin: 0; font-size: 12px; color: ${BRAND.textMuted}; line-height: 1.5;">
+                      You're receiving this email because you have an account with ${APP_NAME}.
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
+          
         </table>
       </td>
     </tr>
@@ -92,100 +108,130 @@ function emailLayout(content: string, previewText: string): string {
 `;
 }
 
+// Reusable button component
+function primaryButton(text: string, url: string): string {
+  return `
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 32px 0;">
+      <tr>
+        <td style="background-color: ${BRAND.primary}; border-radius: 8px;">
+          <a href="${url}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; letter-spacing: 0.01em;">${text}</a>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+// Reusable info box
+function infoBox(content: string, variant: 'default' | 'success' | 'warning' = 'default'): string {
+  const colors = {
+    default: { bg: BRAND.accent, border: BRAND.border },
+    success: { bg: BRAND.successBg, border: '#d1fae5' },
+    warning: { bg: BRAND.warningBg, border: '#fef3c7' },
+  };
+  const style = colors[variant];
+  
+  return `
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 24px 0;">
+      <tr>
+        <td style="background-color: ${style.bg}; border-radius: 8px; padding: 20px 24px; border: 1px solid ${style.border};">
+          ${content}
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+// Divider
+function divider(): string {
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 24px 0;"><tr><td style="border-top: 1px solid ${BRAND.borderLight};"></td></tr></table>`;
+}
+
 // 1. Email Verification
 export function emailVerificationTemplate(name: string, verifyUrl: string) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      Verify your email address
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${name},<br><br>
-      Welcome to ${APP_NAME}! Please verify your email address to get started with your account.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      Verify your email
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      Welcome to ${APP_NAME}, ${name}. Please verify your email address to activate your account.
     </p>
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${verifyUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        Verify Email Address
-      </a>
-    </div>
-    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      This link will expire in 24 hours. If you didn't create a ${APP_NAME} account, you can safely ignore this email.
+    
+    ${primaryButton('Verify Email Address', verifyUrl)}
+    
+    <p style="margin: 0; font-size: 13px; color: ${BRAND.textMuted}; line-height: 1.6;">
+      This link expires in 24 hours. If you didn't create an account, you can ignore this email.
     </p>
-    <hr style="border: none; border-top: 1px solid ${BRAND.border}; margin: 24px 0;">
-    <p style="margin: 0; font-size: 13px; color: ${BRAND.textMuted};">
-      If the button doesn't work, copy and paste this link:<br>
-      <a href="${verifyUrl}" style="color: ${BRAND.primary}; word-break: break-all;">${verifyUrl}</a>
+    
+    ${divider()}
+    
+    <p style="margin: 0; font-size: 12px; color: ${BRAND.textMuted}; line-height: 1.6;">
+      If the button doesn't work, copy this link:<br>
+      <a href="${verifyUrl}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 12px;">${verifyUrl}</a>
     </p>
-  `, `Verify your ${APP_NAME} email address`);
+  `, `Verify your email address for ${APP_NAME}`);
 
   const text = `
-Hi ${name},
+Verify your email
 
-Welcome to ${APP_NAME}! Please verify your email address by clicking the link below:
+Welcome to ${APP_NAME}, ${name}. Please verify your email address to activate your account.
 
 ${verifyUrl}
 
-This link will expire in 24 hours.
+This link expires in 24 hours. If you didn't create an account, you can ignore this email.
 
-If you didn't create a ${APP_NAME} account, you can safely ignore this email.
-
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `Verify your ${APP_NAME} email address` };
+  return { html, text, subject: `Verify your email for ${APP_NAME}` };
 }
 
 // 2. Welcome Email (after verification)
 export function welcomeEmailTemplate(name: string, loginUrl: string) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      Welcome to ${APP_NAME}! 🎉
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${name},<br><br>
-      Your email has been verified and your account is ready to go! ${APP_NAME} helps you streamline client approvals for your projects.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      Welcome to ${APP_NAME}
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      Your email has been verified, ${name}. Your account is ready.
     </p>
-    <div style="background-color: ${BRAND.background}; border-radius: 12px; padding: 24px; margin: 24px 0;">
-      <h3 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: ${BRAND.text};">
-        Choose your plan:
-      </h3>
+    
+    ${infoBox(`
+      <p style="margin: 0 0 16px; font-size: 13px; font-weight: 600; color: ${BRAND.text}; text-transform: uppercase; letter-spacing: 0.05em;">Choose your plan</p>
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-          <td style="padding: 12px; background-color: ${BRAND.white}; border-radius: 8px; margin-bottom: 8px;">
-            <strong style="color: ${BRAND.text};">Solo Plan - $19 + $3 tax</strong>
-            <p style="margin: 4px 0 0; font-size: 14px; color: ${BRAND.textMuted};">Perfect for individual freelancers. One login email.</p>
+          <td style="padding: 12px 16px; background-color: ${BRAND.cardBg}; border-radius: 6px; border: 1px solid ${BRAND.border};">
+            <p style="margin: 0; font-size: 14px; font-weight: 600; color: ${BRAND.text};">Solo — $19 <span style="font-weight: 400; color: ${BRAND.textMuted};">+ $3 tax</span></p>
+            <p style="margin: 4px 0 0; font-size: 13px; color: ${BRAND.textSecondary};">For individual freelancers</p>
           </td>
         </tr>
         <tr><td style="height: 8px;"></td></tr>
         <tr>
-          <td style="padding: 12px; background-color: ${BRAND.white}; border-radius: 8px;">
-            <strong style="color: ${BRAND.text};">Studio Plan - $29 + $3 tax</strong>
-            <p style="margin: 4px 0 0; font-size: 14px; color: ${BRAND.textMuted};">For teams. Up to 5 team members.</p>
+          <td style="padding: 12px 16px; background-color: ${BRAND.cardBg}; border-radius: 6px; border: 1px solid ${BRAND.border};">
+            <p style="margin: 0; font-size: 14px; font-weight: 600; color: ${BRAND.text};">Studio — $29 <span style="font-weight: 400; color: ${BRAND.textMuted};">+ $3 tax</span></p>
+            <p style="margin: 4px 0 0; font-size: 13px; color: ${BRAND.textSecondary};">For teams up to 5 members</p>
           </td>
         </tr>
       </table>
-    </div>
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${loginUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        Go to Dashboard
-      </a>
-    </div>
-  `, `Welcome to ${APP_NAME}!`);
+    `)}
+    
+    ${primaryButton('Go to Dashboard', loginUrl)}
+  `, `Welcome to ${APP_NAME}`);
 
   const text = `
-Hi ${name},
+Welcome to ${APP_NAME}
 
-Welcome to ${APP_NAME}! Your email has been verified and your account is ready to go.
+Your email has been verified, ${name}. Your account is ready.
 
 Choose your plan:
-- Solo Plan ($19 + $3 tax): Perfect for individual freelancers. One login email.
-- Studio Plan ($29 + $3 tax): For teams. Up to 5 team members.
+• Solo — $19 + $3 tax (For individual freelancers)
+• Studio — $29 + $3 tax (For teams up to 5 members)
 
-Get started here: ${loginUrl}
+Go to Dashboard: ${loginUrl}
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `Welcome to ${APP_NAME}! 🎉` };
+  return { html, text, subject: `Welcome to ${APP_NAME}` };
 }
 
 // 3. Payment Receipt
@@ -198,110 +244,97 @@ export function paymentReceiptTemplate(
   receiptUrl?: string
 ) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      Payment Confirmed ✓
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${name},<br><br>
-      Thank you for your purchase! Your ${planName} plan is now active.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      Payment confirmed
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      Thank you for your purchase, ${name}. Your ${planName} plan is now active.
     </p>
-    <div style="background-color: ${BRAND.background}; border-radius: 12px; padding: 24px; margin: 24px 0;">
-      <h3 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: ${BRAND.text};">
-        Receipt Details
-      </h3>
+    
+    ${infoBox(`
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-          <td style="padding: 8px 0; color: ${BRAND.textMuted}; font-size: 14px;">Plan</td>
-          <td style="padding: 8px 0; color: ${BRAND.text}; font-size: 14px; text-align: right; font-weight: 500;">${planName}</td>
+          <td style="padding: 8px 0; font-size: 13px; color: ${BRAND.textSecondary};">Plan</td>
+          <td style="padding: 8px 0; font-size: 13px; color: ${BRAND.text}; text-align: right; font-weight: 500;">${planName}</td>
         </tr>
         <tr>
-          <td style="padding: 8px 0; color: ${BRAND.textMuted}; font-size: 14px;">Amount</td>
-          <td style="padding: 8px 0; color: ${BRAND.text}; font-size: 14px; text-align: right;">$${(amount / 100).toFixed(2)}</td>
+          <td style="padding: 8px 0; font-size: 13px; color: ${BRAND.textSecondary};">Amount</td>
+          <td style="padding: 8px 0; font-size: 13px; color: ${BRAND.text}; text-align: right;">$${(amount / 100).toFixed(2)}</td>
         </tr>
         <tr>
-          <td style="padding: 8px 0; color: ${BRAND.textMuted}; font-size: 14px;">Tax</td>
-          <td style="padding: 8px 0; color: ${BRAND.text}; font-size: 14px; text-align: right;">$${(tax / 100).toFixed(2)}</td>
+          <td style="padding: 8px 0; font-size: 13px; color: ${BRAND.textSecondary};">Tax</td>
+          <td style="padding: 8px 0; font-size: 13px; color: ${BRAND.text}; text-align: right;">$${(tax / 100).toFixed(2)}</td>
         </tr>
         <tr>
-          <td colspan="2" style="padding: 8px 0;"><hr style="border: none; border-top: 1px solid ${BRAND.border};"></td>
+          <td colspan="2" style="padding: 12px 0 8px;"><div style="border-top: 1px solid ${BRAND.border};"></div></td>
         </tr>
         <tr>
-          <td style="padding: 8px 0; color: ${BRAND.text}; font-size: 16px; font-weight: 600;">Total</td>
-          <td style="padding: 8px 0; color: ${BRAND.primary}; font-size: 16px; text-align: right; font-weight: 600;">$${(total / 100).toFixed(2)}</td>
+          <td style="padding: 0; font-size: 14px; color: ${BRAND.text}; font-weight: 600;">Total</td>
+          <td style="padding: 0; font-size: 14px; color: ${BRAND.text}; text-align: right; font-weight: 600;">$${(total / 100).toFixed(2)}</td>
         </tr>
       </table>
-    </div>
-    ${receiptUrl ? `
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${receiptUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        View Receipt
-      </a>
-    </div>
-    ` : ''}
-  `, `Payment receipt for ${APP_NAME} ${planName} plan`);
+    `)}
+    
+    ${receiptUrl ? primaryButton('View Receipt', receiptUrl) : ''}
+  `, `Payment receipt for ${APP_NAME}`);
 
   const text = `
-Hi ${name},
+Payment confirmed
 
-Thank you for your purchase! Your ${planName} plan is now active.
+Thank you for your purchase, ${name}. Your ${planName} plan is now active.
 
-Receipt Details:
-- Plan: ${planName}
-- Amount: $${(amount / 100).toFixed(2)}
-- Tax: $${(tax / 100).toFixed(2)}
-- Total: $${(total / 100).toFixed(2)}
+Receipt:
+Plan: ${planName}
+Amount: $${(amount / 100).toFixed(2)}
+Tax: $${(tax / 100).toFixed(2)}
+Total: $${(total / 100).toFixed(2)}
 
 ${receiptUrl ? `View receipt: ${receiptUrl}` : ''}
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} Payment Receipt - ${planName} Plan` };
+  return { html, text, subject: `${APP_NAME} — Payment Receipt` };
 }
 
 // 4. Upgrade Confirmation
 export function upgradeConfirmationTemplate(name: string, dashboardUrl: string) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      Upgrade Successful! 🚀
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${name},<br><br>
-      Your workspace has been upgraded to the <strong>Studio</strong> plan! You can now invite up to 4 additional team members.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      Upgrade successful
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      Your workspace has been upgraded to Studio, ${name}. You can now invite up to 4 additional team members.
     </p>
-    <div style="background-color: ${BRAND.background}; border-radius: 12px; padding: 24px; margin: 24px 0;">
-      <h3 style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: ${BRAND.text};">
-        What's New
-      </h3>
-      <ul style="margin: 0; padding: 0 0 0 20px; color: ${BRAND.textMuted}; font-size: 14px; line-height: 1.8;">
-        <li>Invite up to 4 team members</li>
-        <li>Collaborate on projects together</li>
-        <li>Manage team permissions</li>
-      </ul>
-    </div>
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${dashboardUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        Invite Team Members
-      </a>
-    </div>
-  `, `Upgrade to Studio plan confirmed`);
+    
+    ${infoBox(`
+      <p style="margin: 0 0 12px; font-size: 13px; font-weight: 600; color: ${BRAND.text};">What's included</p>
+      <p style="margin: 0; font-size: 13px; color: ${BRAND.textSecondary}; line-height: 1.8;">
+        • Invite up to 4 team members<br>
+        • Collaborate on projects<br>
+        • Manage team permissions
+      </p>
+    `)}
+    
+    ${primaryButton('Invite Team Members', dashboardUrl)}
+  `, `Upgrade to Studio confirmed`);
 
   const text = `
-Hi ${name},
+Upgrade successful
 
-Your workspace has been upgraded to the Studio plan! You can now invite up to 4 additional team members.
+Your workspace has been upgraded to Studio, ${name}. You can now invite up to 4 additional team members.
 
-What's New:
-- Invite up to 4 team members
-- Collaborate on projects together
-- Manage team permissions
+What's included:
+• Invite up to 4 team members
+• Collaborate on projects
+• Manage team permissions
 
-Invite team members here: ${dashboardUrl}
+Invite team members: ${dashboardUrl}
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} Upgrade Confirmed - Welcome to Studio!` };
+  return { html, text, subject: `${APP_NAME} — Welcome to Studio` };
 }
 
 // 5. Studio Member Added (notify owner)
@@ -311,39 +344,39 @@ export function memberAddedNotificationTemplate(
   memberEmail: string
 ) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      New Team Member Joined
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${ownerName},<br><br>
-      A new member has joined your ${APP_NAME} workspace.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      New team member
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      A new member has joined your workspace, ${ownerName}.
     </p>
-    <div style="background-color: ${BRAND.background}; border-radius: 12px; padding: 24px; margin: 24px 0;">
+    
+    ${infoBox(`
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-          <td style="padding: 8px 0; color: ${BRAND.textMuted}; font-size: 14px;">Name</td>
-          <td style="padding: 8px 0; color: ${BRAND.text}; font-size: 14px; text-align: right; font-weight: 500;">${memberName}</td>
+          <td style="padding: 4px 0; font-size: 13px; color: ${BRAND.textSecondary};">Name</td>
+          <td style="padding: 4px 0; font-size: 13px; color: ${BRAND.text}; text-align: right; font-weight: 500;">${memberName}</td>
         </tr>
         <tr>
-          <td style="padding: 8px 0; color: ${BRAND.textMuted}; font-size: 14px;">Email</td>
-          <td style="padding: 8px 0; color: ${BRAND.text}; font-size: 14px; text-align: right;">${memberEmail}</td>
+          <td style="padding: 4px 0; font-size: 13px; color: ${BRAND.textSecondary};">Email</td>
+          <td style="padding: 4px 0; font-size: 13px; color: ${BRAND.text}; text-align: right;">${memberEmail}</td>
         </tr>
       </table>
-    </div>
-  `, `${memberName} joined your ${APP_NAME} workspace`);
+    `)}
+  `, `${memberName} joined your workspace`);
 
   const text = `
-Hi ${ownerName},
+New team member
 
-A new member has joined your ${APP_NAME} workspace.
+A new member has joined your workspace, ${ownerName}.
 
 Name: ${memberName}
 Email: ${memberEmail}
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} - ${memberName} joined your workspace` };
+  return { html, text, subject: `${APP_NAME} — ${memberName} joined your workspace` };
 }
 
 // 6. Studio Invite Email
@@ -353,45 +386,40 @@ export function studioInviteTemplate(
   inviteUrl: string
 ) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      You're Invited! 🎉
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      ${inviterName} has invited you to join <strong>${workspaceName}</strong> on ${APP_NAME}.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      You're invited
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      ${inviterName} has invited you to join <strong style="color: ${BRAND.text};">${workspaceName}</strong> on ${APP_NAME}.
     </p>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      ${APP_NAME} is a client approval portal that helps teams manage project deliverables and get client sign-off efficiently.
+    
+    ${primaryButton('Accept Invitation', inviteUrl)}
+    
+    <p style="margin: 0; font-size: 13px; color: ${BRAND.textMuted}; line-height: 1.6;">
+      This invitation expires in 1 hour. If it expires, ask ${inviterName} to send a new one.
     </p>
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${inviteUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        Accept Invitation
-      </a>
-    </div>
-    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      ⏰ This invitation expires in <strong>1 hour</strong>. If it expires, ask ${inviterName} to send a new one.
+    
+    ${divider()}
+    
+    <p style="margin: 0; font-size: 12px; color: ${BRAND.textMuted}; line-height: 1.6;">
+      If the button doesn't work, copy this link:<br>
+      <a href="${inviteUrl}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 12px;">${inviteUrl}</a>
     </p>
-    <hr style="border: none; border-top: 1px solid ${BRAND.border}; margin: 24px 0;">
-    <p style="margin: 0; font-size: 13px; color: ${BRAND.textMuted};">
-      If the button doesn't work, copy and paste this link:<br>
-      <a href="${inviteUrl}" style="color: ${BRAND.primary}; word-break: break-all;">${inviteUrl}</a>
-    </p>
-  `, `${inviterName} invited you to join ${workspaceName} on ${APP_NAME}`);
+  `, `${inviterName} invited you to ${workspaceName}`);
 
   const text = `
-You're Invited!
+You're invited
 
 ${inviterName} has invited you to join ${workspaceName} on ${APP_NAME}.
 
-${APP_NAME} is a client approval portal that helps teams manage project deliverables and get client sign-off efficiently.
+Accept your invitation: ${inviteUrl}
 
-Accept your invitation here: ${inviteUrl}
+This invitation expires in 1 hour.
 
-⏰ This invitation expires in 1 hour.
-
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} - You're invited to join ${workspaceName}` };
+  return { html, text, subject: `Join ${workspaceName} on ${APP_NAME}` };
 }
 
 // 7. Project Created Email
@@ -403,40 +431,37 @@ export function projectCreatedTemplate(
   projectUrl: string
 ) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      Project Created 📁
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${teamMemberName},<br><br>
-      A new project has been created in your workspace.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      Project created
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      A new project has been added to your workspace, ${teamMemberName}.
     </p>
-    <div style="background-color: ${BRAND.background}; border-radius: 12px; padding: 24px; margin: 24px 0;">
+    
+    ${infoBox(`
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-          <td style="padding: 8px 0; color: ${BRAND.textMuted}; font-size: 14px;">Project</td>
-          <td style="padding: 8px 0; color: ${BRAND.text}; font-size: 14px; text-align: right; font-weight: 500;">${projectTitle}</td>
+          <td style="padding: 4px 0; font-size: 13px; color: ${BRAND.textSecondary};">Project</td>
+          <td style="padding: 4px 0; font-size: 13px; color: ${BRAND.text}; text-align: right; font-weight: 500;">${projectTitle}</td>
         </tr>
         <tr>
-          <td style="padding: 8px 0; color: ${BRAND.textMuted}; font-size: 14px;">Client</td>
-          <td style="padding: 8px 0; color: ${BRAND.text}; font-size: 14px; text-align: right;">${clientName}</td>
+          <td style="padding: 4px 0; font-size: 13px; color: ${BRAND.textSecondary};">Client</td>
+          <td style="padding: 4px 0; font-size: 13px; color: ${BRAND.text}; text-align: right;">${clientName}</td>
         </tr>
         <tr>
-          <td style="padding: 8px 0; color: ${BRAND.textMuted}; font-size: 14px;">Email</td>
-          <td style="padding: 8px 0; color: ${BRAND.text}; font-size: 14px; text-align: right;">${clientEmail}</td>
+          <td style="padding: 4px 0; font-size: 13px; color: ${BRAND.textSecondary};">Email</td>
+          <td style="padding: 4px 0; font-size: 13px; color: ${BRAND.text}; text-align: right;">${clientEmail}</td>
         </tr>
       </table>
-    </div>
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${projectUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        View Project
-      </a>
-    </div>
-  `, `New project created: ${projectTitle}`);
+    `)}
+    
+    ${primaryButton('View Project', projectUrl)}
+  `, `New project: ${projectTitle}`);
 
   const text = `
-Hi ${teamMemberName},
+Project created
 
-A new project has been created in your workspace.
+A new project has been added to your workspace, ${teamMemberName}.
 
 Project: ${projectTitle}
 Client: ${clientName}
@@ -444,45 +469,42 @@ Email: ${clientEmail}
 
 View project: ${projectUrl}
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} - New project: ${projectTitle}` };
+  return { html, text, subject: `${APP_NAME} — New project: ${projectTitle}` };
 }
 
 // 8. Email Change Verification
 export function emailChangeVerificationTemplate(name: string, newEmail: string, verifyUrl: string) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      Confirm Email Change
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${name},<br><br>
-      You requested to change your email address to <strong>${newEmail}</strong>. Please confirm this change by clicking the button below.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      Confirm email change
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      You requested to change your email address to <strong style="color: ${BRAND.text};">${newEmail}</strong>. Please confirm this change.
     </p>
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${verifyUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        Confirm Email Change
-      </a>
-    </div>
-    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      This link will expire in 1 hour. If you didn't request this change, please ignore this email.
+    
+    ${primaryButton('Confirm Email Change', verifyUrl)}
+    
+    <p style="margin: 0; font-size: 13px; color: ${BRAND.textMuted}; line-height: 1.6;">
+      This link expires in 1 hour. If you didn't request this change, you can ignore this email.
     </p>
   `, `Confirm your email change on ${APP_NAME}`);
 
   const text = `
-Hi ${name},
+Confirm email change
 
-You requested to change your email address to ${newEmail}. Please confirm this change by clicking the link below:
+You requested to change your email address to ${newEmail}. Please confirm this change.
 
 ${verifyUrl}
 
-This link will expire in 1 hour. If you didn't request this change, please ignore this email.
+This link expires in 1 hour. If you didn't request this change, you can ignore this email.
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} - Confirm your email change` };
+  return { html, text, subject: `${APP_NAME} — Confirm your email change` };
 }
 
 // 9. Client Comment Notification
@@ -493,39 +515,42 @@ export function clientCommentNotificationTemplate(
   commentPreview: string,
   projectUrl: string
 ) {
+  const truncatedComment = commentPreview.length > 180 ? commentPreview.substring(0, 180) + '...' : commentPreview;
+  
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      New Client Comment 💬
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${teamMemberName},<br><br>
-      <strong>${clientName}</strong> left a comment on <strong>${projectTitle}</strong>.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      New comment
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      ${clientName} commented on <strong style="color: ${BRAND.text};">${projectTitle}</strong>.
     </p>
-    <div style="background-color: ${BRAND.background}; border-radius: 12px; padding: 24px; margin: 24px 0; border-left: 4px solid ${BRAND.primary};">
-      <p style="margin: 0; font-size: 15px; color: ${BRAND.text}; font-style: italic; line-height: 1.6;">
-        "${commentPreview.length > 200 ? commentPreview.substring(0, 200) + '...' : commentPreview}"
-      </p>
-    </div>
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${projectUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        View Comment
-      </a>
-    </div>
+    
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 24px 0;">
+      <tr>
+        <td style="background-color: ${BRAND.accent}; border-radius: 8px; padding: 20px 24px; border-left: 3px solid ${BRAND.primary};">
+          <p style="margin: 0; font-size: 14px; color: ${BRAND.textSecondary}; font-style: italic; line-height: 1.6;">
+            "${truncatedComment}"
+          </p>
+        </td>
+      </tr>
+    </table>
+    
+    ${primaryButton('View Comment', projectUrl)}
   `, `${clientName} commented on ${projectTitle}`);
 
   const text = `
-Hi ${teamMemberName},
+New comment
 
-${clientName} left a comment on ${projectTitle}:
+${clientName} commented on ${projectTitle}:
 
-"${commentPreview}"
+"${truncatedComment}"
 
 View and reply: ${projectUrl}
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} - New comment on ${projectTitle}` };
+  return { html, text, subject: `${APP_NAME} — Comment on ${projectTitle}` };
 }
 
 // 10. Client Approval Email
@@ -536,39 +561,35 @@ export function clientApprovalTemplate(
   projectUrl: string
 ) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.success};">
-      Project Approved! ✅
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${teamMemberName},<br><br>
-      Great news! <strong>${clientName}</strong> has approved <strong>${projectTitle}</strong>. The project is now complete.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.success}; letter-spacing: -0.3px;">
+      Project approved
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      ${clientName} has approved <strong style="color: ${BRAND.text};">${projectTitle}</strong>.
     </p>
-    <div style="background-color: #ecfdf5; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center;">
-      <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
-      <p style="margin: 0; font-size: 16px; color: ${BRAND.success}; font-weight: 600;">
-        Congratulations on the successful project!
+    
+    ${infoBox(`
+      <p style="margin: 0; font-size: 14px; color: ${BRAND.success}; font-weight: 500; text-align: center;">
+        Congratulations on the successful project.
       </p>
-    </div>
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${projectUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        View Project
-      </a>
-    </div>
-  `, `${clientName} approved ${projectTitle}!`);
+    `, 'success')}
+    
+    ${primaryButton('View Project', projectUrl)}
+  `, `${projectTitle} has been approved`);
 
   const text = `
-Hi ${teamMemberName},
+Project approved
 
-Great news! ${clientName} has approved ${projectTitle}. The project is now complete.
+${clientName} has approved ${projectTitle}.
 
-🎉 Congratulations on the successful project!
+Congratulations on the successful project.
 
 View project: ${projectUrl}
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} - Project Approved: ${projectTitle} ✅` };
+  return { html, text, subject: `${APP_NAME} — ${projectTitle} Approved` };
 }
 
 // 11. Client Requested Changes Email
@@ -580,41 +601,42 @@ export function changesRequestedTemplate(
   projectUrl: string
 ) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      Changes Requested ⚡
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${teamMemberName},<br><br>
-      <strong>${clientName}</strong> has requested changes on <strong>${projectTitle}</strong>.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      Changes requested
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      ${clientName} has requested changes on <strong style="color: ${BRAND.text};">${projectTitle}</strong>.
     </p>
+    
     ${note ? `
-    <div style="background-color: #fef3c7; border-radius: 12px; padding: 24px; margin: 24px 0; border-left: 4px solid #f59e0b;">
-      <p style="margin: 0 0 8px; font-size: 14px; color: #92400e; font-weight: 600;">Client's Note:</p>
-      <p style="margin: 0; font-size: 15px; color: #78350f; line-height: 1.6;">
-        "${note}"
-      </p>
-    </div>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 24px 0;">
+      <tr>
+        <td style="background-color: ${BRAND.warningBg}; border-radius: 8px; padding: 20px 24px; border-left: 3px solid ${BRAND.warning};">
+          <p style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: ${BRAND.warning}; text-transform: uppercase; letter-spacing: 0.05em;">Client's note</p>
+          <p style="margin: 0; font-size: 14px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+            "${note}"
+          </p>
+        </td>
+      </tr>
+    </table>
     ` : ''}
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${projectUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        View Project
-      </a>
-    </div>
-  `, `${clientName} requested changes on ${projectTitle}`);
+    
+    ${primaryButton('View Project', projectUrl)}
+  `, `Changes requested on ${projectTitle}`);
 
   const text = `
-Hi ${teamMemberName},
+Changes requested
 
 ${clientName} has requested changes on ${projectTitle}.
 
-${note ? `Client's Note: "${note}"` : ''}
+${note ? `Client's note: "${note}"` : ''}
 
-View project and make updates: ${projectUrl}
+View project: ${projectUrl}
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} - Changes requested on ${projectTitle}` };
+  return { html, text, subject: `${APP_NAME} — Changes requested on ${projectTitle}` };
 }
 
 // 12. Thank You for Review Email
@@ -626,37 +648,38 @@ export function reviewThankYouTemplate(
   const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
   
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      Thank You for Your Review! 🙏
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${clientName},<br><br>
-      Thank you for taking the time to review <strong>${projectTitle}</strong>. Your feedback helps the team improve and helps other clients make informed decisions.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      Thank you for your review
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      Your feedback on <strong style="color: ${BRAND.text};">${projectTitle}</strong> has been submitted.
     </p>
-    <div style="background-color: ${BRAND.background}; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center;">
-      <p style="margin: 0 0 8px; font-size: 14px; color: ${BRAND.textMuted};">Your Rating</p>
-      <p style="margin: 0; font-size: 32px; color: #fbbf24; letter-spacing: 4px;">
+    
+    ${infoBox(`
+      <p style="margin: 0 0 8px; font-size: 12px; color: ${BRAND.textMuted}; text-align: center; text-transform: uppercase; letter-spacing: 0.05em;">Your rating</p>
+      <p style="margin: 0; font-size: 24px; color: #eab308; text-align: center; letter-spacing: 2px;">
         ${stars}
       </p>
-    </div>
-    <p style="margin: 24px 0 0; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6; text-align: center;">
-      We hope to work with you again soon!
+    `)}
+    
+    <p style="margin: 32px 0 0; font-size: 14px; color: ${BRAND.textSecondary}; line-height: 1.6; text-align: center;">
+      We appreciate your time and look forward to working with you again.
     </p>
-  `, `Thank you for your review on ${APP_NAME}`);
+  `, `Thank you for your review`);
 
   const text = `
-Hi ${clientName},
+Thank you for your review
 
-Thank you for taking the time to review ${projectTitle}. Your feedback helps the team improve and helps other clients make informed decisions.
+Your feedback on ${projectTitle} has been submitted.
 
-Your Rating: ${stars}
+Your rating: ${stars}
 
-We hope to work with you again soon!
+We appreciate your time and look forward to working with you again.
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} - Thank you for your review!` };
+  return { html, text, subject: `${APP_NAME} — Thank you for your review` };
 }
 
 // Client Invite to View Project
@@ -667,74 +690,70 @@ export function clientProjectInviteTemplate(
   projectUrl: string
 ) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      You Have a Project to Review 📋
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${clientName},<br><br>
-      <strong>${teamName}</strong> has shared <strong>${projectTitle}</strong> with you on ${APP_NAME}. You can view the deliverables, leave comments, and approve the project when ready.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      Project ready for review
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      ${teamName} has shared <strong style="color: ${BRAND.text};">${projectTitle}</strong> with you. Review the deliverables, leave comments, and approve when ready.
     </p>
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${projectUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        View Project
-      </a>
-    </div>
-    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND.textMuted}; line-height: 1.6;">
+    
+    ${primaryButton('View Project', projectUrl)}
+    
+    <p style="margin: 0; font-size: 13px; color: ${BRAND.textMuted}; line-height: 1.6;">
       You'll need to create an account with this email address to access the project.
     </p>
-  `, `${teamName} shared a project with you on ${APP_NAME}`);
+  `, `${teamName} shared ${projectTitle} with you`);
 
   const text = `
-Hi ${clientName},
+Project ready for review
 
-${teamName} has shared ${projectTitle} with you on ${APP_NAME}. You can view the deliverables, leave comments, and approve the project when ready.
+${teamName} has shared ${projectTitle} with you. Review the deliverables, leave comments, and approve when ready.
 
 View project: ${projectUrl}
 
 You'll need to create an account with this email address to access the project.
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} - ${teamName} shared ${projectTitle} with you` };
+  return { html, text, subject: `${teamName} shared ${projectTitle} with you` };
 }
 
 // Password Reset Email
 export function passwordResetTemplate(name: string, resetUrl: string) {
   const html = emailLayout(`
-    <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: ${BRAND.text};">
-      Reset Your Password
-    </h2>
-    <p style="margin: 0 0 24px; font-size: 16px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      Hi ${name},<br><br>
-      We received a request to reset your ${APP_NAME} password. Click the button below to create a new password.
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.text}; letter-spacing: -0.3px;">
+      Reset your password
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      We received a request to reset your password, ${name}. Click below to create a new one.
     </p>
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${resetUrl}" class="button" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND.primary}; color: ${BRAND.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-        Reset Password
-      </a>
-    </div>
-    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND.textMuted}; line-height: 1.6;">
-      This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
+    
+    ${primaryButton('Reset Password', resetUrl)}
+    
+    <p style="margin: 0; font-size: 13px; color: ${BRAND.textMuted}; line-height: 1.6;">
+      This link expires in 1 hour. If you didn't request this, you can ignore this email.
     </p>
-    <hr style="border: none; border-top: 1px solid ${BRAND.border}; margin: 24px 0;">
-    <p style="margin: 0; font-size: 13px; color: ${BRAND.textMuted};">
-      If the button doesn't work, copy and paste this link:<br>
-      <a href="${resetUrl}" style="color: ${BRAND.primary}; word-break: break-all;">${resetUrl}</a>
+    
+    ${divider()}
+    
+    <p style="margin: 0; font-size: 12px; color: ${BRAND.textMuted}; line-height: 1.6;">
+      If the button doesn't work, copy this link:<br>
+      <a href="${resetUrl}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 12px;">${resetUrl}</a>
     </p>
   `, `Reset your ${APP_NAME} password`);
 
   const text = `
-Hi ${name},
+Reset your password
 
-We received a request to reset your ${APP_NAME} password. Click the link below to create a new password:
+We received a request to reset your password, ${name}. Click the link below to create a new one:
 
 ${resetUrl}
 
-This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
+This link expires in 1 hour. If you didn't request this, you can ignore this email.
 
-- The ${APP_NAME} Team
+– ${APP_NAME}
 `;
 
-  return { html, text, subject: `${APP_NAME} - Reset your password` };
+  return { html, text, subject: `${APP_NAME} — Reset your password` };
 }
