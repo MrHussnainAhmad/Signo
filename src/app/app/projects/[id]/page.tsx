@@ -397,7 +397,7 @@ export default function ProjectDetailPage() {
                 <div className="mb-5">
                   <FileUpload
                     onUpload={handleUpload}
-                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,video/*,audio/*"
+                    accept="*"
                     maxSize={maxFileSize}
                     hint={`Max ${maxFileSizeLabel}. Images, PDFs, documents, videos, and archives.`}
                     progress={uploadProgress}

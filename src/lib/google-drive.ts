@@ -378,33 +378,8 @@ export function getThumbnailUrl(driveFileId: string): string {
 
 // Validate file type
 export function isAllowedFileType(mimeType: string): boolean {
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "application/zip",
-    "application/x-zip-compressed",
-    "video/mp4",
-    "video/quicktime",
-    "video/webm",
-    "audio/mpeg",
-    "audio/wav",
-    "audio/ogg",
-    "text/plain",
-    "text/csv",
-    "application/json",
-  ];
-
-  return allowedTypes.includes(mimeType);
+  // Allow all file types as per user request
+  return true;
 }
 
 export const MAX_FILE_SIZE = 100 * 1024 * 1024;
