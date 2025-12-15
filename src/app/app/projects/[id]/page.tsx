@@ -101,6 +101,7 @@ export default function ProjectDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | undefined>(undefined);
+  const [uploadDetails, setUploadDetails] = useState<{ speed: string; uploaded: number; total: number } | undefined>(undefined);
 
   const maxFileSize = useMemo(() => {
     const plan = project?.workspace.plan;
@@ -185,6 +186,8 @@ export default function ProjectDetailPage() {
 
   async function handleUpload(file: File) {
     setUploadProgress(0);
+    setUploadDetails({ speed: '0 MB/s', uploaded: 0, total: file.size });
+    
     try {
       // 1. Init Upload
       const initResponse = await fetch(`/api/projects/${projectId}/deliverables`, {
@@ -214,10 +217,34 @@ export default function ProjectDetailPage() {
           const xhr = new XMLHttpRequest();
           xhr.open('PUT', uploadUrl);
           
+          let startTime = Date.now();
+          let lastLoaded = 0;
+
           xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
+              const now = Date.now();
               const percentComplete = (event.loaded / event.total) * 100;
               setUploadProgress(percentComplete);
+
+              // Calculate speed every 500ms
+              if (now - startTime > 500) {
+                const diffTime = (now - startTime) / 1000; // seconds
+                const diffLoaded = event.loaded - lastLoaded;
+                const bps = diffLoaded / diffTime;
+                
+                const speed = bps > 1024 * 1024 
+                  ? `${(bps / (1024 * 1024)).toFixed(1)} MB/s`
+                  : `${(bps / 1024).toFixed(1)} KB/s`;
+
+                setUploadDetails({
+                  speed,
+                  uploaded: event.loaded,
+                  total: event.total
+                });
+
+                startTime = now;
+                lastLoaded = event.loaded;
+              }
             }
           };
 
@@ -273,6 +300,7 @@ export default function ProjectDetailPage() {
       throw error; // Re-throw to show error in FileUpload component
     } finally {
       setUploadProgress(undefined);
+      setUploadDetails(undefined);
     }
   }
 
@@ -401,6 +429,9 @@ export default function ProjectDetailPage() {
                     maxSize={maxFileSize}
                     hint={`Max ${maxFileSizeLabel}. Images, PDFs, documents, videos, and archives.`}
                     progress={uploadProgress}
+                    uploadSpeed={uploadDetails?.speed}
+                    uploadedBytes={uploadDetails?.uploaded}
+                    totalBytes={uploadDetails?.total}
                   />
                 </div>
               )}

@@ -186,6 +186,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         metadata = await getFileMetadata(fileId);
       } else {
         // Recovery flow: Client lost fileId (e.g. CORS error), find file by name
+        // Add a small delay to allow Drive indexing to catch up
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
         // This is safe because verifyFileInProject logic is inherent in findLatestFileInProject (checks parent folder)
         metadata = await findLatestFileInProject(project.id, fileName);
       }

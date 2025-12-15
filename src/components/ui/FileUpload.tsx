@@ -12,6 +12,9 @@ interface FileUploadProps {
   disabled?: boolean;
   className?: string;
   progress?: number;
+  uploadSpeed?: string;
+  uploadedBytes?: number;
+  totalBytes?: number;
 }
 
 export function FileUpload({
@@ -23,6 +26,9 @@ export function FileUpload({
   disabled = false,
   className = '',
   progress,
+  uploadSpeed,
+  uploadedBytes,
+  totalBytes,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -32,7 +38,7 @@ export function FileUpload({
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
@@ -159,12 +165,18 @@ export function FileUpload({
                   <span>Uploading...</span>
                   <span>{Math.round(progress)}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
                   <div 
                     className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-out" 
                     style={{ width: `${Math.max(5, progress)}%` }}
                   ></div>
                 </div>
+                {(uploadedBytes !== undefined && totalBytes !== undefined) && (
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>{formatFileSize(uploadedBytes)} / {formatFileSize(totalBytes)}</span>
+                    {uploadSpeed && <span>{uploadSpeed}</span>}
+                  </div>
+                )}
               </div>
             ) : (
               <>
