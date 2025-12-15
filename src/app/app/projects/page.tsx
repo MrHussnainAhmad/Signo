@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
+import { ConfirmModal } from '@/components/ui/Modal';
 import {
   Plus,
   Search,
@@ -18,6 +19,7 @@ import {
   Copy,
   ArrowUpRight,
   Filter,
+  Trash2,
 } from 'lucide-react';
 
 interface Project {
@@ -47,6 +49,9 @@ export default function ProjectsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<(typeof filterOptions)[number]['value']>('all');
   const [search, setSearch] = useState('');
+  
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -71,6 +76,29 @@ export default function ProjectsPage() {
       showError('Error', 'Failed to load projects');
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleDeleteProject() {
+    if (!projectToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/projects/${projectToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        success('Project Deleted', 'The project has been deleted');
+        setProjects((prev) => prev.filter((p) => p.id !== projectToDelete.id));
+      } else {
+        showError('Error', 'Failed to delete project');
+      }
+    } catch {
+      showError('Error', 'Failed to delete project');
+    } finally {
+      setIsDeleting(false);
+      setProjectToDelete(null);
     }
   }
 
@@ -209,6 +237,16 @@ export default function ProjectsPage() {
 
                   {/* Right actions */}
                   <div className="flex sm:flex-col gap-2 sm:items-end">
+                    {project.status === 'APPROVED' && (
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => setProjectToDelete(project)}
+                        className="text-red-600 hover:bg-red-50 border-red-200"
+                        title="Delete project"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </Button>
+                    )}
                     <Button href={`/app/projects/${project.id}`} variant="secondary">
                       Open
                     </Button>
@@ -229,6 +267,18 @@ export default function ProjectsPage() {
           action={!search ? <Button href="/app/projects/new">Create project</Button> : undefined}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!projectToDelete}
+        onClose={() => setProjectToDelete(null)}
+        onConfirm={handleDeleteProject}
+        title="Delete project"
+        message={`Are you sure you want to delete "${projectToDelete?.title}"? All files will be permanently deleted to free up storage. Reviews will be preserved.`}
+        confirmText="Delete Project"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
