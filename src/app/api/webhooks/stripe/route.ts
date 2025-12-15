@@ -49,6 +49,11 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      // Subscription events - suppress unhandled logs for now
+      case 'invoice.payment_succeeded':
+      case 'customer.subscription.updated':
+        break;
+
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }

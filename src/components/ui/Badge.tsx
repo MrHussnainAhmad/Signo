@@ -109,7 +109,7 @@ export function StatusBadge({ status, size = 'md', className = '' }: StatusBadge
 }
 
 // Plan Badge
-type PlanType = 'UNPAID' | 'SOLO' | 'STUDIO';
+type PlanType = 'UNPAID' | 'SOLO' | 'STUDIO' | 'BUSINESS';
 
 interface PlanBadgeProps {
   plan: PlanType;
@@ -121,6 +121,7 @@ const planConfig: Record<PlanType, { label: string; variant: BadgeVariant }> = {
   UNPAID: { label: 'Free', variant: 'gray' },
   SOLO: { label: 'Solo', variant: 'indigo' },
   STUDIO: { label: 'Studio', variant: 'purple' },
+  BUSINESS: { label: 'Business', variant: 'blue' },
 };
 
 export function PlanBadge({ plan, size = 'md', className = '' }: PlanBadgeProps) {
