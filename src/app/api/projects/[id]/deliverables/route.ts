@@ -20,6 +20,8 @@ import {
 } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
 
+import { getWorkspaceStorageUsage, getPlanLimits, formatBytes } from '@/lib/storage';
+
 interface RouteParams {
   params: { id: string };
 }
@@ -69,6 +71,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // POST - Upload deliverable
 export async function POST(request: NextRequest, { params }: RouteParams) {
+  let uploadedFileId: string | null = null;
+
   try {
     // Rate limiting
     const rateLimitResult = checkRateLimit(request, 'upload');
@@ -121,17 +125,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Validate file size based on plan
-    let maxFileSize = 100 * 1024 * 1024; // 100MB default
-    if (project.workspace.plan === 'STUDIO') {
-      maxFileSize = 2 * 1024 * 1024 * 1024; // 2GB
-    } else if (project.workspace.plan === 'SOLO') {
-      maxFileSize = 500 * 1024 * 1024; // 500MB
+    // Get plan limits
+    const limits = getPlanLimits(project.workspace.plan);
+
+    // Validate file size
+    if (file.size > limits.maxFileSize) {
+      return errorResponse(
+        `File is Larger then ${formatBytes(limits.maxFileSize)}, please choose small file or upgrade plan`,
+        400
+      );
     }
 
-    if (file.size > maxFileSize) {
+    // Check storage limit
+    const currentUsage = await getWorkspaceStorageUsage(session.workspaceId);
+    if (currentUsage + file.size > limits.maxStorage) {
       return errorResponse(
-        `File too large. Maximum size is ${maxFileSize / 1024 / 1024}MB`,
+        'Storage full. Please delete approved projects or upgrade to other plan.',
         400
       );
     }
@@ -147,6 +156,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       buffer,
       projectId: project.id,
     });
+
+    uploadedFileId = uploadedFile.driveFileId;
 
     // Get current version number
     const latestDeliverable = await db.deliverable.findFirst({
@@ -200,6 +211,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       201
     );
   } catch (error) {
+    // Cleanup Drive file if DB write failed
+    if (uploadedFileId) {
+      try {
+        await deleteFromGoogleDrive(uploadedFileId);
+        console.log('Cleaned up orphaned Drive file:', uploadedFileId);
+      } catch (cleanupError) {
+        console.error('Failed to cleanup orphaned Drive file:', cleanupError);
+      }
+    }
     return handleApiError(error);
   }
 }

@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Ca
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Avatar } from '@/components/ui/Avatar';
-import { Badge, RoleBadge, PlanBadge } from '@/components/ui/Badge'; // ✅ FIX: import Badge
+import { Badge, RoleBadge, PlanBadge } from '@/components/ui/Badge';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { ConfirmModal, Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -23,6 +23,8 @@ import {
   Upload,
   Settings as SettingsIcon,
   LockKeyhole,
+  Database,
+  ReceiptText,
 } from 'lucide-react';
 
 interface User {
@@ -48,9 +50,20 @@ interface Member {
 interface Workspace {
   id: string;
   name: string;
-  plan: 'UNPAID' | 'SOLO' | 'STUDIO';
+  plan: 'UNPAID' | 'SOLO' | 'STUDIO' | 'BUSINESS';
   logoUrl: string | null;
   isOwner: boolean;
+  currentStorage: number;
+  maxStorage: number;
+}
+
+function formatBytes(bytes: number, decimals = 2) {
+  if (!+bytes) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
 export default function SettingsPage() {
@@ -73,6 +86,7 @@ export default function SettingsPage() {
   const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
+  const [isDeletingData, setIsDeletingData] = useState(false);
 
   // Modal states
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -247,6 +261,28 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleDeleteCompleted() {
+    if (!confirm('Are you sure you want to delete data for all approved projects? This cannot be undone.')) return;
+    
+    setIsDeletingData(true);
+    try {
+      const response = await fetch('/api/projects/cleanup-approved', { method: 'POST' });
+      const result = await response.json();
+      
+      if (response.ok) {
+        success('Cleanup Successful', result.data.message);
+        // Refresh data to update storage
+        fetchData();
+      } else {
+        showError('Error', result.error || 'Failed to delete data');
+      }
+    } catch {
+      showError('Error', 'Failed to delete data');
+    } finally {
+      setIsDeletingData(false);
+    }
+  }
+
   async function handleAvatarUpload(file: File) {
     const formData = new FormData();
     formData.append('file', file);
@@ -268,7 +304,8 @@ export default function SettingsPage() {
   }
 
   const showWorkspaceSection = !!workspace?.isOwner;
-  const showTeamSection = workspace?.plan === 'STUDIO';
+  const showTeamSection = workspace?.plan === 'STUDIO' || workspace?.plan === 'BUSINESS';
+  const showStorageSection = !!workspace?.isOwner; // Show storage for owner
 
   const sectionLinks = useMemo(() => {
     const links: Array<{ id: string; label: string; icon: React.ReactNode }> = [
@@ -283,12 +320,19 @@ export default function SettingsPage() {
         icon: <Building2 className="h-4 w-4" aria-hidden="true" />,
       });
     }
+    if (showStorageSection) {
+      links.push({
+        id: 'storage',
+        label: 'Storage',
+        icon: <Database className="h-4 w-4" aria-hidden="true" />,
+      });
+    }
     if (showTeamSection) {
       links.push({ id: 'team', label: 'Team', icon: <Users className="h-4 w-4" aria-hidden="true" /> });
     }
 
     return links;
-  }, [showTeamSection, showWorkspaceSection]);
+  }, [showTeamSection, showWorkspaceSection, showStorageSection]);
 
   if (isLoading) {
     return (
@@ -311,6 +355,8 @@ export default function SettingsPage() {
       </div>
     );
   }
+
+  const storagePercentage = workspace ? Math.min(100, Math.round((workspace.currentStorage / workspace.maxStorage) * 100)) : 0;
 
   return (
     <div className="max-w-6xl">
@@ -499,12 +545,60 @@ export default function SettingsPage() {
             </section>
           )}
 
-          {workspace?.plan === 'STUDIO' && (
+          {workspace?.isOwner && (
+            <section id="storage">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Database className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                    Storage
+                  </CardTitle>
+                  <CardDescription>Manage usage and free up space</CardDescription>
+                </CardHeader>
+
+                <div className="space-y-6">
+                  <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-semibold text-gray-900">Usage</p>
+                      <p className="text-sm font-medium text-gray-700">{formatBytes(workspace.currentStorage)} / {formatBytes(workspace.maxStorage)}</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div 
+                        className={`h-2.5 rounded-full ${storagePercentage > 90 ? 'bg-red-500' : 'bg-indigo-600'}`} 
+                        style={{ width: `${storagePercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500 text-right">{storagePercentage}% used</p>
+                  </div>
+
+                  {workspace.plan !== 'SOLO' && (
+                    <div className="flex flex-col gap-3">
+                      <p className="text-sm text-gray-600">
+                        Running low on space? You can manually delete files from approved projects.
+                      </p>
+                      <Button 
+                        variant="secondary" 
+                        onClick={handleDeleteCompleted}
+                        isLoading={isDeletingData}
+                      >
+                        <span className="inline-flex items-center gap-2 text-red-700">
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                          Delete Completed Projects
+                        </span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </section>
+          )}
+
+          {showTeamSection && (
             <section id="team">
               <Card>
                 <CardHeader
                   action={
-                    workspace.isOwner && (
+                    workspace?.isOwner && (
                       <Button onClick={() => setShowInviteModal(true)} size="sm">
                         <span className="inline-flex items-center gap-2">
                           <Mail className="h-4 w-4" aria-hidden="true" />

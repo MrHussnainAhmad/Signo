@@ -13,6 +13,8 @@ import {
   validateBody,
 } from '@/lib/api-response';
 
+import { getWorkspaceStorageUsage } from '@/lib/storage';
+
 const checkoutSchema = z.object({
   planType: z.enum(['solo', 'studio', 'upgrade', 'business']),
 });
@@ -145,15 +147,27 @@ export async function GET(request: NextRequest) {
     const isOwner = workspace.ownerId === session.userId;
     
     let maxMembers = 0;
-    if (workspace.plan === 'STUDIO') maxMembers = config.limits.studio.maxMembers;
-    else if (workspace.plan === 'SOLO') maxMembers = config.limits.solo.maxMembers;
-    else if (workspace.plan === 'BUSINESS') maxMembers = config.limits.business.maxMembers;
+    let maxStorage = 0;
+    if (workspace.plan === 'STUDIO') {
+      maxMembers = config.limits.studio.maxMembers;
+      maxStorage = config.limits.studio.maxStorage;
+    } else if (workspace.plan === 'SOLO') {
+      maxMembers = config.limits.solo.maxMembers;
+      maxStorage = config.limits.solo.maxStorage;
+    } else if (workspace.plan === 'BUSINESS') {
+      maxMembers = config.limits.business.maxMembers;
+      maxStorage = config.limits.business.maxStorage;
+    }
+
+    const currentStorage = await getWorkspaceStorageUsage(workspace.id);
 
     return successResponse({
       plan: workspace.plan,
       isOwner,
       memberCount: workspace._count.members,
       maxMembers,
+      currentStorage,
+      maxStorage,
       canUpgrade: (workspace.plan === 'SOLO' && isOwner) || (workspace.plan === 'STUDIO' && isOwner), // Can upgrade from SOLO (to Studio) or STUDIO (to Business)
       purchases: workspace.purchases.map((p) => ({
         id: p.id,

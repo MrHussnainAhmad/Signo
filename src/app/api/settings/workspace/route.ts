@@ -11,6 +11,8 @@ import {
   validateBody,
 } from '@/lib/api-response';
 
+import { getWorkspaceStorageUsage, getPlanLimits } from '@/lib/storage';
+
 const updateWorkspaceSchema = z.object({
   name: z
     .string()
@@ -66,6 +68,9 @@ export async function GET(request: NextRequest) {
       return errorResponse('Workspace not found', 404);
     }
 
+    const currentStorage = await getWorkspaceStorageUsage(workspace.id);
+    const limits = getPlanLimits(workspace.plan);
+
     return successResponse({
       workspace: {
         id: workspace.id,
@@ -83,6 +88,8 @@ export async function GET(request: NextRequest) {
         projectCount: workspace._count.projects,
         memberCount: workspace._count.members,
         createdAt: workspace.createdAt,
+        currentStorage,
+        maxStorage: limits.maxStorage,
       },
     });
   } catch (error) {

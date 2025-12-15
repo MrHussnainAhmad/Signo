@@ -2,7 +2,7 @@ export const APP_NAME = "Signo";
 
 export const config = {
   appName: APP_NAME,
-  appUrl: process.env.APP_URL || "http://localhost:3000",
+  appUrl: process.env.APP_URL || "https://signo-hypo.vercel.app",
 
   // Session
   sessionCookieName: process.env.SESSION_COOKIE_NAME || "signo_session",
@@ -42,12 +42,18 @@ export const config = {
   limits: {
     solo: {
       maxMembers: 1,
+      maxFileSize: 500 * 1024 * 1024, // 500MB
+      maxStorage: 25 * 1024 * 1024 * 1024, // 25GB
     },
     studio: {
       maxMembers: 5,
+      maxFileSize: 1 * 1024 * 1024 * 1024, // 1GB
+      maxStorage: 500 * 1024 * 1024 * 1024, // 500GB
     },
     business: {
       maxMembers: 10,
+      maxFileSize: 2 * 1024 * 1024 * 1024, // 2GB
+      maxStorage: 1 * 1024 * 1024 * 1024 * 1024, // 1TB
     },
   },
 

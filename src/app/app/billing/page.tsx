@@ -39,9 +39,20 @@ interface BillingData {
     upgrade: { amount: number; tax: number; total: number };
     business: { amount: number; tax: number; total: number };
   };
+  currentStorage: number;
+  maxStorage: number;
 }
 
 type PlanKey = 'solo' | 'studio' | 'business';
+
+function formatBytes(bytes: number, decimals = 2) {
+  if (!+bytes) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
 
 const planMeta: Record<PlanKey, { title: string; blurb: string }> = {
   solo: {
@@ -125,6 +136,7 @@ export default function BillingPage() {
   const [data, setData] = useState<BillingData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     // backend logic untouched
@@ -175,6 +187,27 @@ export default function BillingPage() {
     }
   }
 
+  async function handleDeleteCompleted() {
+    if (!confirm('Are you sure you want to delete data for all approved projects? This cannot be undone.')) return;
+    
+    setIsDeleting(true);
+    try {
+      const response = await fetch('/api/projects/cleanup-approved', { method: 'POST' });
+      const result = await response.json();
+      
+      if (response.ok) {
+        success('Cleanup Successful', result.data.message);
+        fetchBilling(); // Refresh data to update storage
+      } else {
+        showError('Error', result.error || 'Failed to delete data');
+      }
+    } catch {
+      showError('Error', 'Failed to delete data');
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   const upgradeInfo = useMemo(() => {
     if (!data) return { text: 'Upgrade', type: 'upgrade' as const };
     
@@ -219,6 +252,7 @@ export default function BillingPage() {
 
   const isUnpaid = data.plan === 'UNPAID';
   const canPurchase = data.isOwner;
+  const storagePercentage = Math.min(100, Math.round((data.currentStorage / data.maxStorage) * 100)) || 0;
 
   return (
     <div className="space-y-8">
@@ -226,6 +260,7 @@ export default function BillingPage() {
 
       {/* Top overview (NEW layout: 3 compact cards) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Plan Card */}
         <Card className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -272,6 +307,52 @@ export default function BillingPage() {
           )}
         </Card>
 
+        {/* Storage Card */}
+        <Card className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Storage</p>
+              <div className="mt-3">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-gray-900">{formatBytes(data.currentStorage)}</span>
+                  <span className="text-sm text-gray-500">/ {formatBytes(data.maxStorage)}</span>
+                </div>
+              </div>
+              
+              <div className="mt-3 w-full bg-gray-100 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full ${storagePercentage > 90 ? 'bg-red-500' : 'bg-indigo-600'}`} 
+                  style={{ width: `${storagePercentage}%` }}
+                ></div>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">{storagePercentage}% used</p>
+            </div>
+
+            <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 ring-1 ring-gray-200">
+              <ReceiptText className="h-5 w-5 text-gray-700" aria-hidden="true" />
+            </div>
+          </div>
+
+          {/* Delete button for Solo users */}
+          {data.plan === 'SOLO' && (
+            <div className="mt-5">
+              <Button
+                variant="secondary"
+                onClick={handleDeleteCompleted}
+                isLoading={isDeleting}
+                fullWidth
+                size="sm"
+              >
+                Delete Completed Projects
+              </Button>
+              <p className="mt-2 text-xs text-gray-500">
+                Frees up storage by deleting files from approved projects.
+              </p>
+            </div>
+          )}
+        </Card>
+
+        {/* Team Card */}
         <Card className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -300,52 +381,6 @@ export default function BillingPage() {
 
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 ring-1 ring-gray-200">
               <Users className="h-5 w-5 text-gray-700" aria-hidden="true" />
-            </div>
-          </div>
-
-          {!data.isOwner && (
-            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <div className="flex items-start gap-3">
-                <LockKeyhole className="h-5 w-5 text-amber-800 mt-0.5" aria-hidden="true" />
-                <div>
-                  <p className="text-sm font-semibold text-amber-900">Owner required</p>
-                  <p className="mt-1 text-sm text-amber-800">
-                    Only the workspace owner can purchase or upgrade.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Payments</p>
-              <p className="mt-3 text-sm text-gray-600">
-                Purchase history and invoices.
-              </p>
-
-              <div className="mt-5 flex items-center gap-2 text-sm text-gray-600">
-                <ReceiptText className="h-4 w-4 text-gray-400" aria-hidden="true" />
-                {data.purchases.length} purchase(s)
-              </div>
-            </div>
-
-            <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 ring-1 ring-gray-200">
-              <ShieldCheck className="h-5 w-5 text-gray-700" aria-hidden="true" />
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4">
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="h-5 w-5 text-gray-500 mt-0.5" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Secure checkout</p>
-                <p className="mt-1 text-sm text-gray-600">
-                  Payments are processed securely by Stripe.
-                </p>
-              </div>
             </div>
           </div>
         </Card>
