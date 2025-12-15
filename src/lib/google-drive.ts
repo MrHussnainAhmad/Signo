@@ -246,9 +246,9 @@ export async function setFilePublic(driveFileId: string): Promise<void> {
         type: "anyone",
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to set public permissions:", error);
-    // Don't throw, just log. It might already be public or user might have restrictions.
+    throw new Error(`Failed to make file public: ${extractGoogleErrorMessage(error)}`);
   }
 }
 
