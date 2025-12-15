@@ -40,6 +40,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Debug: count all projects
+    const totalProjects = await db.project.count({
+      where: {
+        workspaceId: session.workspaceId,
+      },
+    });
+
     let deletedCount = 0;
     let freedSpace = 0;
 
@@ -80,6 +87,9 @@ export async function POST(request: NextRequest) {
       message: `Successfully deleted data for ${deletedCount} projects`,
       deletedCount,
       freedSpace,
+      totalFound: approvedProjects.length,
+      totalProjects,
+      projectIds: approvedProjects.map(p => p.id),
     });
   } catch (error) {
     return handleApiError(error);
