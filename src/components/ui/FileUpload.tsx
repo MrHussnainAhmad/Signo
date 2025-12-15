@@ -11,6 +11,7 @@ interface FileUploadProps {
   hint?: string;
   disabled?: boolean;
   className?: string;
+  progress?: number;
 }
 
 export function FileUpload({
@@ -21,6 +22,7 @@ export function FileUpload({
   hint,
   disabled = false,
   className = '',
+  progress,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -150,9 +152,26 @@ export function FileUpload({
         />
 
         {isUploading ? (
-          <div className="flex flex-col items-center">
-            <Spinner size="lg" />
-            <p className="mt-4 text-sm font-medium text-gray-700">Uploading...</p>
+          <div className="flex flex-col items-center w-full max-w-xs mx-auto">
+            {typeof progress === 'number' ? (
+              <div className="w-full">
+                <div className="flex justify-between mb-1 text-sm font-medium text-gray-700">
+                  <span>Uploading...</span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-out" 
+                    style={{ width: `${Math.max(5, progress)}%` }}
+                  ></div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Spinner size="lg" />
+                <p className="mt-4 text-sm font-medium text-gray-700">Uploading...</p>
+              </>
+            )}
           </div>
         ) : (
           <>

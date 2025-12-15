@@ -100,6 +100,7 @@ export default function ProjectDetailPage() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | undefined>(undefined);
 
   const maxFileSize = useMemo(() => {
     const plan = project?.workspace.plan;
@@ -181,58 +182,96 @@ export default function ProjectDetailPage() {
   }
 
   async function handleUpload(file: File) {
-    // 1. Init Upload
-    const initResponse = await fetch(`/api/projects/${projectId}/deliverables`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'init',
-        fileName: file.name,
-        mimeType: file.type,
-        fileSize: file.size,
-      }),
-    });
+    setUploadProgress(0);
+    try {
+      // 1. Init Upload
+      const initResponse = await fetch(`/api/projects/${projectId}/deliverables`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'init',
+          fileName: file.name,
+          mimeType: file.type,
+          fileSize: file.size,
+        }),
+      });
 
-    const initData = await initResponse.json();
+      const initData = await initResponse.json();
 
-    if (!initResponse.ok) {
-      throw new Error(initData.error || 'Failed to initiate upload');
+      if (!initResponse.ok) {
+        throw new Error(initData.error || 'Failed to initiate upload');
+      }
+
+      const { uploadUrl } = initData.data;
+
+      let fileId: string | undefined;
+
+      // 2. Upload to Drive (Directly) with Progress
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('PUT', uploadUrl);
+          
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percentComplete = (event.loaded / event.total) * 100;
+              setUploadProgress(percentComplete);
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const driveFile = JSON.parse(xhr.responseText);
+                fileId = driveFile.id;
+                resolve();
+              } catch (e) {
+                // If response is not JSON or empty (sometimes happens with CORS issues masking response)
+                // We treat it as success-but-unknown-id -> Recovery flow
+                console.warn('Could not parse Drive response:', e);
+                resolve(); 
+              }
+            } else {
+              reject(new Error(`Drive upload failed with status ${xhr.status}`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error('Network error during upload'));
+          xhr.onabort = () => reject(new Error('Upload aborted'));
+
+          xhr.send(file);
+        });
+      } catch (error) {
+        // CORS errors often appear here as NetworkError
+        console.warn('Drive upload network error (likely CORS), attempting recovery:', error);
+        // We proceed to finalize WITHOUT fileId, letting backend find the file.
+      }
+
+      // 3. Finalize Upload
+      const finalizeResponse = await fetch(`/api/projects/${projectId}/deliverables`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'finalize',
+          fileId, // Might be undefined if CORS blocked response
+          fileName: file.name,
+        }),
+      });
+
+      const finalizeData = await finalizeResponse.json();
+
+      if (!finalizeResponse.ok) {
+        throw new Error(finalizeData.error || 'Failed to finalize upload');
+      }
+
+      success('File Uploaded', `${file.name} has been uploaded successfully`);
+      fetchProject();
+    } catch (error) {
+      console.error('Upload flow error:', error);
+      throw error; // Re-throw to show error in FileUpload component
+    } finally {
+      setUploadProgress(undefined);
     }
-
-    const { uploadUrl } = initData.data;
-
-    // 2. Upload to Drive (Directly)
-    const driveResponse = await fetch(uploadUrl, {
-      method: 'PUT',
-      body: file,
-    });
-
-    if (!driveResponse.ok) {
-      throw new Error('Failed to upload file to storage');
-    }
-
-    const driveFile = await driveResponse.json();
-    const fileId = driveFile.id;
-
-    // 3. Finalize Upload
-    const finalizeResponse = await fetch(`/api/projects/${projectId}/deliverables`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'finalize',
-        fileId,
-        fileName: file.name,
-      }),
-    });
-
-    const finalizeData = await finalizeResponse.json();
-
-    if (!finalizeResponse.ok) {
-      throw new Error(finalizeData.error || 'Failed to finalize upload');
-    }
-
-    success('File Uploaded', `${file.name} has been uploaded successfully`);
-    fetchProject();
   }
 
   async function handleDeleteDeliverable(deliverableId: string) {
@@ -359,6 +398,7 @@ export default function ProjectDetailPage() {
                     accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,video/*,audio/*"
                     maxSize={maxFileSize}
                     hint={`Max ${maxFileSizeLabel}. Images, PDFs, documents, videos, and archives.`}
+                    progress={uploadProgress}
                   />
                 </div>
               )}

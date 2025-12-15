@@ -252,6 +252,37 @@ export async function verifyFileInProject(driveFileId: string, projectId: string
   }
 }
 
+// Find latest file in project (Fallback for CORS issues)
+export async function findLatestFileInProject(
+  projectId: string, 
+  fileName: string
+): Promise<{ id: string; name: string; mimeType: string; size: string; webViewLink: string; webContentLink: string } | null> {
+  const drive = getGoogleDriveClient();
+  try {
+    const projectFolderId = await getOrCreateProjectFolder(drive, projectId);
+    
+    // Escape single quotes for query
+    const safeName = fileName.replace(/'/g, "\\'");
+    
+    const response = await drive.files.list({
+      q: `name = '${safeName}' and '${projectFolderId}' in parents and trashed = false`,
+      orderBy: 'createdTime desc',
+      pageSize: 1,
+      fields: "files(id, name, mimeType, size, webViewLink, webContentLink)",
+    });
+
+    if (response.data.files && response.data.files.length > 0) {
+      // @ts-ignore - google types are partial but we requested fields
+      return response.data.files[0];
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Find latest file failed:", error);
+    return null;
+  }
+}
+
 // Get or create a folder for the project
 async function getOrCreateProjectFolder(
   drive: ReturnType<typeof google.drive>,

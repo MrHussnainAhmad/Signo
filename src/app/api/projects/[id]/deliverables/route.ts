@@ -12,6 +12,7 @@ import {
   getResumableUploadUrl,
   verifyFileInProject,
   getFileMetadata,
+  findLatestFileInProject,
 } from '@/lib/google-drive';
 import {
   successResponse,
@@ -39,8 +40,8 @@ const initUploadSchema = z.object({
 
 const finalizeUploadSchema = z.object({
   action: z.literal('finalize'),
-  fileId: z.string(),
-  fileName: z.string(), // Optional validation
+  fileId: z.string().optional(),
+  fileName: z.string(),
 });
 
 // GET - List deliverables
@@ -173,16 +174,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       if (!result.success) return errorResponse('Invalid finalize parameters', 400);
       const { fileId, fileName } = result.data;
 
-      // Verify file ownership/location
-      const isValid = await verifyFileInProject(fileId, project.id);
-      if (!isValid) {
-        return forbiddenResponse('Invalid file or location');
+      let metadata: any = null;
+
+      if (fileId) {
+        // Standard flow: Client sent fileId
+        // Verify file ownership/location
+        const isValid = await verifyFileInProject(fileId, project.id);
+        if (!isValid) {
+          return forbiddenResponse('Invalid file or location');
+        }
+        metadata = await getFileMetadata(fileId);
+      } else {
+        // Recovery flow: Client lost fileId (e.g. CORS error), find file by name
+        // This is safe because verifyFileInProject logic is inherent in findLatestFileInProject (checks parent folder)
+        metadata = await findLatestFileInProject(project.id, fileName);
       }
 
-      // Get metadata from Drive
-      const metadata = await getFileMetadata(fileId);
       if (!metadata) {
-        return errorResponse('File not found in Drive', 404);
+        return errorResponse('File not found in Drive. Upload may have failed.', 404);
       }
 
       // Versioning
