@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useCallback } from 'react';
 import { Spinner } from './Spinner';
+import { formatBytes } from '@/lib/format';
 
 interface FileUploadProps {
   onUpload: (file: File) => Promise<void>;
@@ -35,20 +36,10 @@ export function FileUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    if (!bytes || isNaN(bytes)) return '0 Bytes'; // Handle invalid input
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    if (i < 0) return '0 Bytes';
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + (sizes[i] || 'Bytes');
-  };
-
   const validateFile = useCallback(
     (file: File): string | null => {
       if (file.size > maxSize) {
-        return `File too large. Maximum size is ${formatFileSize(maxSize)}`;
+        return `File too large. Maximum size is ${formatBytes(maxSize)}`;
       }
 
       if (accept !== '*') {
@@ -175,7 +166,7 @@ export function FileUpload({
                 </div>
                 {(uploadedBytes !== undefined && totalBytes !== undefined) && (
                   <div className="flex justify-between text-xs text-gray-500">
-                    <span>{formatFileSize(uploadedBytes)} / {formatFileSize(totalBytes)}</span>
+                    <span>{formatBytes(uploadedBytes)} / {formatBytes(totalBytes)}</span>
                     {uploadSpeed && <span>{uploadSpeed}</span>}
                   </div>
                 )}

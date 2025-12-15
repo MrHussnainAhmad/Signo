@@ -73,15 +73,7 @@ interface Project {
   } | null;
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-  if (!bytes || isNaN(bytes)) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  if (i < 0) return '0 Bytes';
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i] || 'Bytes'}`;
-}
+import { formatBytes } from '@/lib/format';
 
 function fileKindIcon(mimeType: string) {
   // keep it simple and reliable
@@ -456,7 +448,7 @@ export default function ProjectDetailPage() {
                               {d.fileName}
                             </p>
                             <p className="mt-1 text-sm text-gray-600">
-                              {formatFileSize(d.fileSize)}
+                              {formatBytes(d.fileSize)}
                               <span className="mx-2 text-gray-300">•</span>
                               <span className="font-medium text-gray-900">v{d.versionNumber}</span>
                             </p>
