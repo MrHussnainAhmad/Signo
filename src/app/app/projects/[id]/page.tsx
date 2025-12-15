@@ -105,16 +105,18 @@ export default function ProjectDetailPage() {
   const maxFileSize = useMemo(() => {
     const plan = project?.workspace.plan;
     if (!plan) return 100 * 1024 * 1024;
-    if (plan === 'STUDIO') return 2 * 1024 * 1024 * 1024; // 2GB
-    if (plan === 'SOLO') return 500 * 1024 * 1024; // 500MB
+    if (plan === 'BUSINESS') return 5 * 1024 * 1024 * 1024 * 1024; // 5TB (Unlimited)
+    if (plan === 'STUDIO') return 5 * 1024 * 1024 * 1024; // 5GB
+    if (plan === 'SOLO') return 1 * 1024 * 1024 * 1024; // 1GB
     return 100 * 1024 * 1024; // 100MB
   }, [project?.workspace.plan]);
 
   const maxFileSizeLabel = useMemo(() => {
      const plan = project?.workspace.plan;
      if (!plan) return '100MB';
-     if (plan === 'STUDIO') return '2GB';
-     if (plan === 'SOLO') return '500MB';
+     if (plan === 'BUSINESS') return 'Unlimited';
+     if (plan === 'STUDIO') return '5GB';
+     if (plan === 'SOLO') return '1GB';
      return '100MB';
   }, [project?.workspace.plan]);
 
