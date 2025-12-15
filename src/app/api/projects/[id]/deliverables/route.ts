@@ -13,6 +13,7 @@ import {
   verifyFileInProject,
   getFileMetadata,
   findLatestFileInProject,
+  setFilePublic,
 } from '@/lib/google-drive';
 import {
   successResponse,
@@ -196,6 +197,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       if (!metadata) {
         return errorResponse('File not found in Drive. Upload may have failed.', 404);
       }
+
+      // Ensure file is public
+      await setFilePublic(metadata.id!);
 
       // Versioning
       const latestDeliverable = await db.deliverable.findFirst({

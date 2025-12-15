@@ -235,6 +235,23 @@ export async function uploadToGoogleDrive(params: UploadFileParams): Promise<Upl
   }
 }
 
+// Set file permissions to public
+export async function setFilePublic(driveFileId: string): Promise<void> {
+  const drive = getGoogleDriveClient();
+  try {
+    await drive.permissions.create({
+      fileId: driveFileId,
+      requestBody: {
+        role: "reader",
+        type: "anyone",
+      },
+    });
+  } catch (error) {
+    console.error("Failed to set public permissions:", error);
+    // Don't throw, just log. It might already be public or user might have restrictions.
+  }
+}
+
 // Verify file belongs to project
 export async function verifyFileInProject(driveFileId: string, projectId: string): Promise<boolean> {
   const drive = getGoogleDriveClient();
