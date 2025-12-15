@@ -138,7 +138,12 @@ function ClientPortalContent() {
       const data = await response.json();
 
       if (data.success) {
-        setProject(data.data.project);
+        setProject((prev) => {
+          if (JSON.stringify(prev) === JSON.stringify(data.data.project)) {
+            return prev;
+          }
+          return data.data.project;
+        });
         setIsAuthenticated(data.data.isAuthenticated);
         setCanInteract(data.data.canInteract);
         setClientEmail(data.data.clientEmail);
@@ -153,7 +158,6 @@ function ClientPortalContent() {
   }
 
   async function fetchComments(background = false) {
-    if (!project) return;
     try {
       const response = await fetch(`/api/client/projects/${shareToken}/comments`);
       const data = await response.json();
@@ -161,6 +165,9 @@ function ClientPortalContent() {
       if (data.success) {
         setProject((prev) => {
           if (!prev) return null;
+          if (JSON.stringify(prev.comments) === JSON.stringify(data.data.comments)) {
+            return prev;
+          }
           return { ...prev, comments: data.data.comments };
         });
       }

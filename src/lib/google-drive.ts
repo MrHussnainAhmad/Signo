@@ -78,6 +78,70 @@ function extractGoogleErrorMessage(error: any): string {
   }
 }
 
+// Get resumable upload URL for client-side upload
+export async function getResumableUploadUrl(
+  params: Omit<UploadFileParams, "buffer">
+): Promise<string> {
+  const { fileName, mimeType, projectId } = params;
+
+  console.log("🔗 Getting resumable upload URL:", fileName);
+
+  let drive;
+  let auth;
+  try {
+    const client = getGoogleDriveClient();
+    drive = client;
+    // We need the auth client to get headers
+    // @ts-ignore - accessing auth from drive instance or recreating it
+    auth = client.context._options.auth; 
+  } catch (authError: any) {
+    console.error("❌ Google Auth Error:", authError?.message);
+    throw new Error(`Google Drive authentication failed: ${authError?.message}`);
+  }
+
+  try {
+    const projectFolderId = await getOrCreateProjectFolder(drive, projectId);
+    
+    // Get auth headers
+    const headers = await auth.getRequestHeaders();
+    
+    // Initiate resumable upload
+    const response = await fetch(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable",
+      {
+        method: "POST",
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+          "X-Upload-Content-Type": mimeType,
+          "X-Upload-Content-Length": "", // Unknown length at start? Or client sends it? Better to leave empty or let client handle if needed.
+        },
+        body: JSON.stringify({
+          name: fileName,
+          mimeType,
+          parents: [projectFolderId],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to initiate resumable upload: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    const uploadUrl = response.headers.get("Location");
+    if (!uploadUrl) {
+      throw new Error("No upload URL returned from Google Drive");
+    }
+
+    console.log("✅ Resumable upload URL generated");
+    return uploadUrl;
+  } catch (error: any) {
+    console.error("❌ Error getting upload URL:", error);
+    throw new Error(`Failed to get upload URL: ${error.message}`);
+  }
+}
+
 // Upload file to Google Drive
 export async function uploadToGoogleDrive(params: UploadFileParams): Promise<UploadedFile> {
   const { fileName, mimeType, buffer, projectId } = params;
@@ -168,6 +232,23 @@ export async function uploadToGoogleDrive(params: UploadFileParams): Promise<Upl
     }
 
     throw new Error(`Google Drive upload failed: ${msg}`);
+  }
+}
+
+// Verify file belongs to project
+export async function verifyFileInProject(driveFileId: string, projectId: string): Promise<boolean> {
+  const drive = getGoogleDriveClient();
+  try {
+    const projectFolderId = await getOrCreateProjectFolder(drive, projectId);
+    const file = await drive.files.get({
+      fileId: driveFileId,
+      fields: "parents",
+    });
+    
+    return file.data.parents?.includes(projectFolderId) || false;
+  } catch (error) {
+    console.error("Verification failed:", error);
+    return false;
   }
 }
 

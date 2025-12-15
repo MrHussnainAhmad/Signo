@@ -102,18 +102,20 @@ export default function ProjectDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const maxFileSize = useMemo(() => {
-    if (!project) return 100 * 1024 * 1024;
-    if (project.workspace.plan === 'STUDIO') return 2 * 1024 * 1024 * 1024; // 2GB
-    if (project.workspace.plan === 'SOLO') return 500 * 1024 * 1024; // 500MB
+    const plan = project?.workspace.plan;
+    if (!plan) return 100 * 1024 * 1024;
+    if (plan === 'STUDIO') return 2 * 1024 * 1024 * 1024; // 2GB
+    if (plan === 'SOLO') return 500 * 1024 * 1024; // 500MB
     return 100 * 1024 * 1024; // 100MB
-  }, [project]);
+  }, [project?.workspace.plan]);
 
   const maxFileSizeLabel = useMemo(() => {
-     if (!project) return '100MB';
-     if (project.workspace.plan === 'STUDIO') return '2GB';
-     if (project.workspace.plan === 'SOLO') return '500MB';
+     const plan = project?.workspace.plan;
+     if (!plan) return '100MB';
+     if (plan === 'STUDIO') return '2GB';
+     if (plan === 'SOLO') return '500MB';
      return '100MB';
-  }, [project]);
+  }, [project?.workspace.plan]);
 
   useEffect(() => {
     fetchProject();
@@ -135,7 +137,13 @@ export default function ProjectDetailPage() {
       const data = await response.json();
 
       if (data.success) {
-        setProject(data.data.project);
+        setProject((prev) => {
+          // Avoid re-render if data is identical
+          if (JSON.stringify(prev) === JSON.stringify(data.data.project)) {
+            return prev;
+          }
+          return data.data.project;
+        });
       } else {
         if (!background) {
           showError('Error', 'Project not found');
@@ -150,7 +158,9 @@ export default function ProjectDetailPage() {
   }
 
   async function fetchComments(background = false) {
-    if (!project) return;
+    // Note: checking !project here might be stale if inside interval closure, 
+    // but fetchComments is called from interval. 
+    // Better to just fetch and update if success.
     try {
       const response = await fetch(`/api/projects/${projectId}/comments`);
       const data = await response.json();
@@ -158,8 +168,10 @@ export default function ProjectDetailPage() {
       if (data.success) {
         setProject((prev) => {
           if (!prev) return null;
-          // Only update if comments changed (length or last ID) to avoid unnecessary re-renders
-          // But React is smart enough. For now just set it.
+          // Only update if comments changed
+          if (JSON.stringify(prev.comments) === JSON.stringify(data.data.comments)) {
+            return prev;
+          }
           return { ...prev, comments: data.data.comments };
         });
       }
@@ -169,19 +181,54 @@ export default function ProjectDetailPage() {
   }
 
   async function handleUpload(file: File) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    // backend unchanged
-    const response = await fetch(`/api/projects/${projectId}/deliverables`, {
+    // 1. Init Upload
+    const initResponse = await fetch(`/api/projects/${projectId}/deliverables`, {
       method: 'POST',
-      body: formData,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'init',
+        fileName: file.name,
+        mimeType: file.type,
+        fileSize: file.size,
+      }),
     });
 
-    const data = await response.json();
+    const initData = await initResponse.json();
 
-    if (!response.ok) {
-      throw new Error(data.error || 'Upload failed');
+    if (!initResponse.ok) {
+      throw new Error(initData.error || 'Failed to initiate upload');
+    }
+
+    const { uploadUrl } = initData.data;
+
+    // 2. Upload to Drive (Directly)
+    const driveResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+    });
+
+    if (!driveResponse.ok) {
+      throw new Error('Failed to upload file to storage');
+    }
+
+    const driveFile = await driveResponse.json();
+    const fileId = driveFile.id;
+
+    // 3. Finalize Upload
+    const finalizeResponse = await fetch(`/api/projects/${projectId}/deliverables`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'finalize',
+        fileId,
+        fileName: file.name,
+      }),
+    });
+
+    const finalizeData = await finalizeResponse.json();
+
+    if (!finalizeResponse.ok) {
+      throw new Error(finalizeData.error || 'Failed to finalize upload');
     }
 
     success('File Uploaded', `${file.name} has been uploaded successfully`);

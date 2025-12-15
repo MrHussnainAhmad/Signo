@@ -9,6 +9,9 @@ import {
   isAllowedFileType,
   isFileSizeAllowed,
   MAX_FILE_SIZE,
+  getResumableUploadUrl,
+  verifyFileInProject,
+  getFileMetadata,
 } from '@/lib/google-drive';
 import {
   successResponse,
@@ -17,14 +20,28 @@ import {
   notFoundResponse,
   forbiddenResponse,
   handleApiError,
+  validateBody,
 } from '@/lib/api-response';
 import { checkRateLimit } from '@/lib/rate-limit';
-
 import { getWorkspaceStorageUsage, getPlanLimits, formatBytes } from '@/lib/storage';
+import { z } from 'zod';
 
 interface RouteParams {
   params: { id: string };
 }
+
+const initUploadSchema = z.object({
+  action: z.literal('init'),
+  fileName: z.string(),
+  mimeType: z.string(),
+  fileSize: z.number(),
+});
+
+const finalizeUploadSchema = z.object({
+  action: z.literal('finalize'),
+  fileId: z.string(),
+  fileName: z.string(), // Optional validation
+});
 
 // GET - List deliverables
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -69,10 +86,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// POST - Upload deliverable
+// POST - Handle Upload (Init & Finalize)
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  let uploadedFileId: string | null = null;
-
   try {
     // Rate limiting
     const rateLimitResult = checkRateLimit(request, 'upload');
@@ -84,6 +99,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (!session || session.type !== 'team') {
       return unauthorizedResponse();
     }
+
+    const body = await request.json();
+    const action = body.action;
 
     // Find project
     const project = await db.project.findFirst({
@@ -104,122 +122,119 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return notFoundResponse('Project not found');
     }
 
-    // Cannot upload to approved projects
     if (project.status === 'APPROVED') {
       return forbiddenResponse('Cannot upload to an approved project');
     }
 
-    // Parse form data
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
+    // --- Action: Init ---
+    if (action === 'init') {
+      const result = initUploadSchema.safeParse(body);
+      if (!result.success) return errorResponse('Invalid init parameters', 400);
+      const { fileName, mimeType, fileSize } = result.data;
 
-    if (!file) {
-      return errorResponse('No file provided', 400);
-    }
+      // Validate type
+      if (!isAllowedFileType(mimeType)) {
+        return errorResponse(
+          'File type not allowed. Supported: images, PDFs, documents, videos, audio, and archives.',
+          400
+        );
+      }
 
-    // Validate file type
-    if (!isAllowedFileType(file.type)) {
-      return errorResponse(
-        'File type not allowed. Supported: images, PDFs, documents, videos, audio, and archives.',
-        400
-      );
-    }
+      // Validate limits
+      const limits = getPlanLimits(project.workspace.plan);
+      if (fileSize > limits.maxFileSize) {
+        return errorResponse(
+          `File is larger than ${formatBytes(limits.maxFileSize)}, please choose a smaller file or upgrade plan`,
+          400
+        );
+      }
 
-    // Get plan limits
-    const limits = getPlanLimits(project.workspace.plan);
+      const currentUsage = await getWorkspaceStorageUsage(session.workspaceId);
+      if (currentUsage + fileSize > limits.maxStorage) {
+        return errorResponse(
+          'Storage full. Please delete approved projects or upgrade to other plan.',
+          400
+        );
+      }
 
-    // Validate file size
-    if (file.size > limits.maxFileSize) {
-      return errorResponse(
-        `File is Larger then ${formatBytes(limits.maxFileSize)}, please choose small file or upgrade plan`,
-        400
-      );
-    }
-
-    // Check storage limit
-    const currentUsage = await getWorkspaceStorageUsage(session.workspaceId);
-    if (currentUsage + file.size > limits.maxStorage) {
-      return errorResponse(
-        'Storage full. Please delete approved projects or upgrade to other plan.',
-        400
-      );
-    }
-
-    // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Upload to Google Drive
-    const uploadedFile = await uploadToGoogleDrive({
-      fileName: file.name,
-      mimeType: file.type,
-      buffer,
-      projectId: project.id,
-    });
-
-    uploadedFileId = uploadedFile.driveFileId;
-
-    // Get current version number
-    const latestDeliverable = await db.deliverable.findFirst({
-      where: {
+      // Get resumable upload URL
+      const uploadUrl = await getResumableUploadUrl({
+        fileName,
+        mimeType,
         projectId: project.id,
-        fileName: file.name,
-      },
-      orderBy: {
-        versionNumber: 'desc',
-      },
-    });
-
-    const versionNumber = latestDeliverable ? latestDeliverable.versionNumber + 1 : 1;
-
-    // Save deliverable to database
-    const deliverable = await db.deliverable.create({
-      data: {
-        projectId: project.id,
-        driveFileId: uploadedFile.driveFileId,
-        webViewLink: uploadedFile.webViewLink,
-        downloadLink: uploadedFile.downloadLink,
-        fileName: uploadedFile.fileName,
-        mimeType: uploadedFile.mimeType,
-        fileSize: uploadedFile.fileSize,
-        versionNumber,
-      },
-    });
-
-    // Update project status if it was waiting for client
-    if (project.status === 'CHANGES_REQUESTED') {
-      await db.project.update({
-        where: { id: project.id },
-        data: { status: 'WAITING_FOR_CLIENT' },
       });
+
+      return successResponse({ uploadUrl });
     }
 
-    return successResponse(
-      {
+    // --- Action: Finalize ---
+    if (action === 'finalize') {
+      const result = finalizeUploadSchema.safeParse(body);
+      if (!result.success) return errorResponse('Invalid finalize parameters', 400);
+      const { fileId, fileName } = result.data;
+
+      // Verify file ownership/location
+      const isValid = await verifyFileInProject(fileId, project.id);
+      if (!isValid) {
+        return forbiddenResponse('Invalid file or location');
+      }
+
+      // Get metadata from Drive
+      const metadata = await getFileMetadata(fileId);
+      if (!metadata) {
+        return errorResponse('File not found in Drive', 404);
+      }
+
+      // Versioning
+      const latestDeliverable = await db.deliverable.findFirst({
+        where: {
+          projectId: project.id,
+          fileName: metadata.name || fileName,
+        },
+        orderBy: {
+          versionNumber: 'desc',
+        },
+      });
+      const versionNumber = latestDeliverable ? latestDeliverable.versionNumber + 1 : 1;
+
+      // Create Record
+      const deliverable = await db.deliverable.create({
+        data: {
+          projectId: project.id,
+          driveFileId: metadata.id!,
+          webViewLink: metadata.webViewLink || '',
+          downloadLink: metadata.webContentLink || '',
+          fileName: metadata.name || fileName,
+          mimeType: metadata.mimeType || 'application/octet-stream',
+          fileSize: parseInt(metadata.size || '0', 10),
+          versionNumber,
+        },
+      });
+
+      if (project.status === 'CHANGES_REQUESTED') {
+        await db.project.update({
+          where: { id: project.id },
+          data: { status: 'WAITING_FOR_CLIENT' },
+        });
+      }
+
+      return successResponse({
         deliverable: {
           id: deliverable.id,
           fileName: deliverable.fileName,
           mimeType: deliverable.mimeType,
           fileSize: deliverable.fileSize,
           webViewLink: deliverable.webViewLink,
-          downloadLink: deliverable.downloadLink,
           versionNumber: deliverable.versionNumber,
           createdAt: deliverable.createdAt,
         },
         message: 'File uploaded successfully',
-      },
-      201
-    );
-  } catch (error) {
-    // Cleanup Drive file if DB write failed
-    if (uploadedFileId) {
-      try {
-        await deleteFromGoogleDrive(uploadedFileId);
-        console.log('Cleaned up orphaned Drive file:', uploadedFileId);
-      } catch (cleanupError) {
-        console.error('Failed to cleanup orphaned Drive file:', cleanupError);
-      }
+      });
     }
+
+    return errorResponse('Invalid action', 400);
+
+  } catch (error) {
     return handleApiError(error);
   }
 }
