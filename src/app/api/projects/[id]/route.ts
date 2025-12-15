@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { getSession } from '@/lib/session';
 import { updateProjectSchema } from '@/lib/validation';
 import { config } from '@/lib/config';
+import { getFileMetadata } from '@/lib/google-drive';
 import {
   successResponse,
   errorResponse,
@@ -56,6 +57,25 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (!project) {
       return notFoundResponse('Project not found');
+    }
+
+    // Self-healing: Check for 0-byte deliverables (processing incomplete) and update them
+    for (const d of project.deliverables) {
+      if (d.fileSize === 0) {
+        try {
+          const metadata = await getFileMetadata(d.driveFileId);
+          if (metadata && parseInt(metadata.size || '0', 10) > 0) {
+            const newSize = parseInt(metadata.size || '0', 10);
+            await db.deliverable.update({
+              where: { id: d.id },
+              data: { fileSize: newSize },
+            });
+            d.fileSize = newSize; // Update in memory for response
+          }
+        } catch (error) {
+          console.error(`Failed to update size for deliverable ${d.id}:`, error);
+        }
+      }
     }
 
     return successResponse({

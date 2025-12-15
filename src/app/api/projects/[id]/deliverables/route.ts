@@ -187,14 +187,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         metadata = await getFileMetadata(fileId);
       } else {
         // Recovery flow: Client lost fileId (e.g. CORS error), find file by name
-        // Wait and poll for file with valid size
+        // Quick poll to find the file. If found, we proceed immediately to avoid Vercel timeout.
+        // If size is 0, the GET endpoint will self-heal it later.
         let attempts = 0;
-        while (attempts < 5) {
+        while (attempts < 3) {
           await new Promise((resolve) => setTimeout(resolve, 2000));
           metadata = await findLatestFileInProject(project.id, fileName);
           
-          // If we found the file and it has a valid size > 0, break
-          if (metadata && parseInt(metadata.size || '0', 10) > 0) {
+          if (metadata) {
             break;
           }
           attempts++;
