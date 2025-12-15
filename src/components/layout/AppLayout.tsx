@@ -62,10 +62,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const handleLogout = async () => {
     try {
-      // Fire and forget logout request
-      fetch('/api/auth/logout', { method: 'POST' });
-      // Instant redirect
+      await fetch('/api/auth/logout', { method: 'POST' });
       router.push('/login');
+      router.refresh(); 
     } catch (error) {
       console.error('Logout failed:', error);
       router.push('/login');
