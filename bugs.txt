@@ -1,0 +1,16 @@
+Plan Usage :
+            - Solo will have max file size limit 500Mb per deliverable, Max size alot will be 25Gb, 
+            - Studio users have Max file upload is 1Gb per deliverable and max size alot will be 500Gb on server, 
+            - Business will have 2Gb file per deleiverable and max size alot will be 1Tb.
+
+Deletion of Data(Updated) :
+            - Users Approved projects will get automatically deleted after one month of approved (Solo Plan), 
+            - Users Approved Projects will get automatically deleted after three months of approved (Studio, Upgrade,Business Plans), 
+            - If Users Storage(Max alot size) get full, ask for deletion of Approved projects or upgrade to other plan.
+            - If users Deliverables are not completelty uploaded and gets terminate or some kind of error during upload automatically delete raw from drive to save storage of user and drive.
+
+UI updates :
+            - Show users storage in settings and billings (used and remaining), 
+            - as user can delete storage data, so show "Delete Completed Projects" button in billings so user can delete approved projects (solo Plan),
+            - as user can delete storage data, so show "Delete Completed Projects" button in settings so Owner can delete approved projects (studio, upgrades, business Plan)
+            - If user try to upliad file greater then there plan's  limit, show alert "File is Larger then {size_limt}, please choose small file or upgrade plan".
