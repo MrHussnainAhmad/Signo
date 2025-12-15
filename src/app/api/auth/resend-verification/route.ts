@@ -50,14 +50,14 @@ export async function POST(request: NextRequest) {
       return successResponse({ message: successMessage });
     }
 
-    // Check if we recently sent a verification email (within last 2 minutes)
+    // Check if we recently sent a verification email (within last 1 minute)
     if (user.verificationExpiry) {
       const tokenCreatedAt = new Date(user.verificationExpiry.getTime() - config.verificationTokenExpiry);
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+      const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
       
-      if (tokenCreatedAt > twoMinutesAgo) {
+      if (tokenCreatedAt > oneMinuteAgo) {
         return errorResponse(
-          'A verification email was recently sent. Please wait a few minutes before requesting another.',
+          'A verification email was recently sent. Please wait a minute before requesting another.',
           429
         );
       }
