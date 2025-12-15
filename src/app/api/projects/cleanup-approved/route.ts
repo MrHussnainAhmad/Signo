@@ -29,12 +29,11 @@ export async function POST(request: NextRequest) {
       return forbiddenResponse('Only the workspace owner can delete project data');
     }
 
-    // Find all APPROVED projects with active data
+    // Find all APPROVED projects with active data (or stuck data)
     const approvedProjects = await db.project.findMany({
       where: {
         workspaceId: session.workspaceId,
         status: 'APPROVED',
-        dataDeletedAt: null,
       },
       include: {
         deliverables: true,
@@ -59,14 +58,22 @@ export async function POST(request: NextRequest) {
         await db.deliverable.deleteMany({
           where: { projectId: project.id },
         });
-      }
 
-      // Mark as deleted
-      await db.project.update({
-        where: { id: project.id },
-        data: { dataDeletedAt: new Date() },
-      });
-      deletedCount++;
+        // Mark as deleted (or update timestamp)
+        await db.project.update({
+          where: { id: project.id },
+          data: { dataDeletedAt: new Date() },
+        });
+        deletedCount++;
+      } else {
+        // If no deliverables but not marked as deleted, mark it now
+        if (!project.dataDeletedAt) {
+           await db.project.update({
+            where: { id: project.id },
+            data: { dataDeletedAt: new Date() },
+          });
+        }
+      }
     }
 
     return successResponse({
