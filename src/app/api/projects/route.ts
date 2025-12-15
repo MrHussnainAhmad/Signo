@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
     // Build filter
     const where: Record<string, unknown> = {
       workspaceId: session.workspaceId,
+      status: { not: 'DELETED' },
     };
 
     if (status && ['WAITING_FOR_CLIENT', 'CHANGES_REQUESTED', 'APPROVED'].includes(status)) {

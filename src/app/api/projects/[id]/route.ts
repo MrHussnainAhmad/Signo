@@ -169,7 +169,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// DELETE - Delete project
+// DELETE - Delete project (Soft delete to preserve reviews)
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getSession();
@@ -196,13 +196,29 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const { deleteFromGoogleDrive } = await import('@/lib/google-drive');
 
     // Delete all deliverables from Google Drive
-    for (const deliverable of project.deliverables) {
-      await deleteFromGoogleDrive(deliverable.driveFileId);
+    if (project.deliverables.length > 0) {
+      await Promise.all(
+        project.deliverables.map((d) => deleteFromGoogleDrive(d.driveFileId))
+      );
+      
+      // Delete deliverable records
+      await db.deliverable.deleteMany({
+        where: { projectId: project.id },
+      });
     }
 
-    // Delete project (cascades to deliverables, comments, etc.)
-    await db.project.delete({
+    // Delete comments
+    await db.comment.deleteMany({
+      where: { projectId: project.id },
+    });
+
+    // Soft delete project
+    await db.project.update({
       where: { id: project.id },
+      data: { 
+        status: 'DELETED',
+        dataDeletedAt: new Date(),
+      },
     });
 
     return successResponse({

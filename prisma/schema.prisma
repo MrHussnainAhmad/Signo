@@ -214,6 +214,7 @@ enum ProjectStatus {
   WAITING_FOR_CLIENT
   CHANGES_REQUESTED
   APPROVED
+  DELETED
 }
 
 enum AuthorType {
