@@ -120,10 +120,18 @@ function ClientPortalContent() {
 
   useEffect(() => {
     fetchProject();
+
+    const commentInterval = setInterval(() => fetchComments(true), 5000);
+    const projectInterval = setInterval(() => fetchProject(true), 60000);
+
+    return () => {
+      clearInterval(commentInterval);
+      clearInterval(projectInterval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shareToken]);
 
-  async function fetchProject() {
+  async function fetchProject(background = false) {
     try {
       // backend unchanged
       const response = await fetch(`/api/client/projects/${shareToken}`);
@@ -135,12 +143,29 @@ function ClientPortalContent() {
         setCanInteract(data.data.canInteract);
         setClientEmail(data.data.clientEmail);
       } else {
-        showError('Error', 'Project not found');
+        if (!background) showError('Error', 'Project not found');
       }
     } catch {
-      showError('Error', 'Failed to load project');
+      if (!background) showError('Error', 'Failed to load project');
     } finally {
-      setIsLoading(false);
+      if (!background) setIsLoading(false);
+    }
+  }
+
+  async function fetchComments(background = false) {
+    if (!project) return;
+    try {
+      const response = await fetch(`/api/client/projects/${shareToken}/comments`);
+      const data = await response.json();
+
+      if (data.success) {
+        setProject((prev) => {
+          if (!prev) return null;
+          return { ...prev, comments: data.data.comments };
+        });
+      }
+    } catch (error) {
+      if (!background) console.error('Failed to fetch comments:', error);
     }
   }
 

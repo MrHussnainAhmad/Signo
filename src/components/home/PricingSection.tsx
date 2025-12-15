@@ -15,11 +15,11 @@ const plans = [
     total: 22,
     features: [
       'Unlimited projects',
-      'Unlimited deliverables',
+      '25GB total storage',
+      '500MB max file size',
       'Client approval page',
       'Comments + approvals',
       'Email notifications',
-      'One user account',
     ],
     cta: 'Get Solo',
     popular: false,
@@ -33,14 +33,33 @@ const plans = [
     total: 32,
     features: [
       'Everything in Solo',
+      '500GB total storage',
+      '1GB max file size',
       'Up to 5 team members',
       'Team collaboration',
       'Workspace branding',
-      'Priority support',
-      'Advanced insights',
     ],
     cta: 'Get Studio',
     popular: true,
+  },
+  {
+    id: 'business',
+    name: 'Business',
+    description: 'For growing agencies',
+    price: 49,
+    tax: 0,
+    total: 49,
+    features: [
+      'Everything in Studio',
+      '1TB total storage',
+      '2GB max file size',
+      'Up to 10 team members',
+      'Priority support',
+      'Dedicated account manager',
+    ],
+    cta: 'Get Business',
+    popular: false,
+    monthly: true,
   },
 ];
 
@@ -50,22 +69,22 @@ export function PricingSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto mb-12 max-w-3xl text-center">
           <p className="text-sm font-semibold tracking-wider text-indigo-600">
-            One-time payment
+            Flexible pricing
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Simple pricing. No subscriptions.
+            Choose the right plan for you
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            Pay once and use {APP_NAME}. No monthly plans.
+            One-time payments for freelancers and small teams. Monthly subscription for growing agencies.
           </p>
         </div>
 
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3">
           {plans.map((plan) => (
             <div
               key={plan.id}
               className={[
-                'relative rounded-3xl border p-7 shadow-sm',
+                'relative rounded-3xl border p-7 shadow-sm flex flex-col',
                 plan.popular
                   ? 'border-indigo-600 bg-indigo-50/40'
                   : 'border-gray-200 bg-white',
@@ -84,20 +103,22 @@ export function PricingSection() {
                   <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
                   <p className="mt-1 text-gray-600">{plan.description}</p>
                 </div>
-                <div className="text-right">
-                  <div className="text-4xl font-bold text-gray-900">${plan.price}</div>
-                  <div className="text-sm text-gray-500">+ ${plan.tax} tax</div>
-                </div>
+              </div>
+
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
+                {plan.tax > 0 && <span className="text-sm text-gray-500">+ ${plan.tax} tax</span>}
+                {'monthly' in plan && plan.monthly && <span className="text-sm font-medium text-gray-500">/month</span>}
               </div>
 
               <div className="mt-4 rounded-2xl bg-white/70 p-4 ring-1 ring-gray-200">
                 <p className="text-sm text-gray-700">
-                  One-time payment:{' '}
-                  <span className="font-semibold text-gray-900">${plan.total}</span>
+                  {'monthly' in plan && plan.monthly ? 'Monthly subscription' : 'One-time payment'}:{' '}
+                  <span className="font-semibold text-gray-900">${plan.total}{'monthly' in plan && plan.monthly ? '/mo' : ''}</span>
                 </p>
               </div>
 
-              <ul className="mt-6 space-y-3">
+              <ul className="mt-6 space-y-3 flex-1">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-3">
                     <Check className="mt-0.5 h-5 w-5 text-green-600" aria-hidden="true" />
@@ -148,12 +169,12 @@ export function PricingSection() {
               {
                 icon: Clock,
                 q: 'How long is data kept?',
-                a: 'Files and related project data are automatically deleted after 3 months.',
+                a: 'Files and related project data are automatically deleted after 2 months.',
               },
               {
                 icon: Shield,
                 q: 'Is this a subscription?',
-                a: 'No. It’s a one-time payment. No monthly renewals.',
+                a: 'Solo and Studio are one-time payments. Business is a monthly subscription.',
               },
             ].map((faq) => {
               const Icon = faq.icon;

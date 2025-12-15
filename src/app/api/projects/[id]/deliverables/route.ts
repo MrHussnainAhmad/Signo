@@ -87,6 +87,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         id: params.id,
         workspaceId: session.workspaceId,
       },
+      include: {
+        workspace: {
+          select: {
+            plan: true,
+          },
+        },
+      },
     });
 
     if (!project) {
@@ -114,10 +121,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Validate file size
-    if (!isFileSizeAllowed(file.size)) {
+    // Validate file size based on plan
+    let maxFileSize = 100 * 1024 * 1024; // 100MB default
+    if (project.workspace.plan === 'STUDIO') {
+      maxFileSize = 2 * 1024 * 1024 * 1024; // 2GB
+    } else if (project.workspace.plan === 'SOLO') {
+      maxFileSize = 500 * 1024 * 1024; // 500MB
+    }
+
+    if (file.size > maxFileSize) {
       return errorResponse(
-        `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+        `File too large. Maximum size is ${maxFileSize / 1024 / 1024}MB`,
         400
       );
     }

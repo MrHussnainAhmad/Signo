@@ -70,21 +70,27 @@ export async function POST(request: NextRequest) {
       return forbiddenResponse('Only the workspace owner can invite members');
     }
 
-    // Check if workspace has Studio plan
-    if (workspace.plan !== 'STUDIO') {
+    // Check if workspace has Studio or Business plan
+    if (workspace.plan !== 'STUDIO' && workspace.plan !== 'BUSINESS') {
       return forbiddenResponse(
-        'Upgrade to Studio plan to invite team members. Solo plan allows only one user.'
+        'Upgrade to Studio or Business plan to invite team members. Solo plan allows only one user.'
       );
     }
 
-    // Check member limit (5 total for Studio)
+    // Check member limit
     const currentMemberCount = workspace.members.length;
     const pendingInviteCount = workspace.invites.length;
-    const maxMembers = config.limits.studio.maxMembers;
+    let maxMembers = config.limits.solo.maxMembers;
+    
+    if (workspace.plan === 'STUDIO') {
+      maxMembers = config.limits.studio.maxMembers;
+    } else if (workspace.plan === 'BUSINESS') {
+      maxMembers = config.limits.business.maxMembers;
+    }
 
     if (currentMemberCount + pendingInviteCount >= maxMembers) {
       return errorResponse(
-        `Studio plan allows up to ${maxMembers} team members. You have ${currentMemberCount} members and ${pendingInviteCount} pending invites.`,
+        `${workspace.plan} plan allows up to ${maxMembers} team members. You have ${currentMemberCount} members and ${pendingInviteCount} pending invites.`,
         400
       );
     }

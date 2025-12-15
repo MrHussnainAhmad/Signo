@@ -6,7 +6,7 @@ export const stripe = new Stripe(config.stripe.secretKey, {
   typescript: true,
 });
 
-export type PlanType = 'solo' | 'studio' | 'upgrade';
+export type PlanType = 'solo' | 'studio' | 'upgrade' | 'business';
 
 export interface CreateCheckoutSessionParams {
   workspaceId: string;
@@ -14,6 +14,7 @@ export interface CreateCheckoutSessionParams {
   planType: PlanType;
   successUrl: string;
   cancelUrl: string;
+  isUpgradeFromStudio?: boolean;
 }
 
 // Helper to check if a price ID is valid (starts with price_)
@@ -25,7 +26,7 @@ function isValidStripePriceId(priceId: string | undefined): boolean {
 export async function createCheckoutSession(
   params: CreateCheckoutSessionParams
 ): Promise<Stripe.Checkout.Session> {
-  const { workspaceId, userEmail, planType, successUrl, cancelUrl } = params;
+  const { workspaceId, userEmail, planType, successUrl, cancelUrl, isUpgradeFromStudio } = params;
 
   const pricing = config.pricing[planType];
   const priceId = config.stripe.prices[planType];
@@ -47,6 +48,10 @@ export async function createCheckoutSession(
       name: `${APP_NAME} Solo to Studio Upgrade`,
       description: 'Upgrade your Solo plan to Studio. Add up to 4 more team members.',
     },
+    business: {
+      name: `${APP_NAME} Business Plan`,
+      description: 'Monthly subscription. Up to 10 team members + advanced features.',
+    },
   };
 
   // Check if we have a valid Stripe Price ID configured
@@ -58,6 +63,8 @@ export async function createCheckoutSession(
     });
   } else {
     // Create price inline using price_data
+    const isSubscription = planType === 'business';
+    
     // Main product/plan
     lineItems.push({
       price_data: {
@@ -67,11 +74,13 @@ export async function createCheckoutSession(
           description: planInfo[planType].description,
         },
         unit_amount: pricing.amount,
+        ...(isSubscription ? { recurring: { interval: 'month' } } : {}),
       },
       quantity: 1,
     });
 
-    // Add tax as a separate line item (for solo and studio, not upgrade)
+    // Add tax as a separate line item (for solo and studio, not upgrade/business usually)
+    // Assuming business tax is 0 or handled differently, but config says tax:0 for business.
     if (pricing.tax > 0) {
       lineItems.push({
         price_data: {
@@ -85,10 +94,25 @@ export async function createCheckoutSession(
         quantity: 1,
       });
     }
+    
+    // Handle Studio -> Business upgrade fee ($10)
+    if (planType === 'business' && isUpgradeFromStudio) {
+       lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: 'Upgrade Fee',
+            description: 'One-time upgrade fee from Studio to Business',
+          },
+          unit_amount: 1000, // $10.00
+        },
+        quantity: 1,
+      });
+    }
   }
 
   const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
+    mode: planType === 'business' ? 'subscription' : 'payment',
     payment_method_types: ['card'],
     line_items: lineItems,
     customer_email: userEmail,
@@ -98,12 +122,18 @@ export async function createCheckoutSession(
       workspaceId,
       planType,
     },
-    payment_intent_data: {
+    payment_intent_data: planType !== 'business' ? {
       metadata: {
         workspaceId,
         planType,
       },
-    },
+    } : undefined,
+    subscription_data: planType === 'business' ? {
+      metadata: {
+        workspaceId,
+        planType,
+      },
+    } : undefined,
     // Add billing address collection for better receipts
     billing_address_collection: 'auto',
     // Allow promotion codes if you want to support them later

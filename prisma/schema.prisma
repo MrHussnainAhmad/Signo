@@ -99,6 +99,8 @@ model Project {
   clientEmail String
   status      ProjectStatus @default(WAITING_FOR_CLIENT)
   shareToken  String   @unique
+  retentionWarningSentAt DateTime?
+  dataDeletedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -187,6 +189,7 @@ enum Plan {
   UNPAID
   SOLO
   STUDIO
+  BUSINESS
 }
 
 enum Role {
@@ -198,6 +201,7 @@ enum PurchaseType {
   SOLO
   STUDIO
   UPGRADE
+  BUSINESS
 }
 
 enum PaymentStatus {

@@ -757,3 +757,37 @@ This link expires in 1 hour. If you didn't request this, you can ignore this ema
 
   return { html, text, subject: `${APP_NAME} — Reset your password` };
 }
+
+// 13. Data Retention Warning
+export function dataRetentionWarningTemplate(
+  ownerName: string,
+  projectTitle: string,
+  deleteDate: string
+) {
+  const html = emailLayout(`
+    <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: ${BRAND.warning}; letter-spacing: -0.3px;">
+      Data retention warning
+    </h1>
+    <p style="margin: 0 0 32px; font-size: 15px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+      The data for project <strong style="color: ${BRAND.text};">${projectTitle}</strong> will be permanently deleted from our servers on ${deleteDate} as per our retention policy.
+    </p>
+    
+    ${infoBox(`
+      <p style="margin: 0; font-size: 14px; color: ${BRAND.textSecondary}; line-height: 1.6;">
+        Please download any files you need before this date. The project metadata will remain, but files will be removed.
+      </p>
+    `, 'warning')}
+  `, `Data deletion warning for ${projectTitle}`);
+
+  const text = `
+Data retention warning
+
+The data for project ${projectTitle} will be permanently deleted from our servers on ${deleteDate} as per our retention policy.
+
+Please download any files you need before this date.
+
+– ${APP_NAME}
+`;
+
+  return { html, text, subject: `${APP_NAME} — Data deletion warning: ${projectTitle}` };
+}

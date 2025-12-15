@@ -69,7 +69,8 @@ export function ReviewCarousel() {
   // No fake reviews. If API returns none, render nothing.
   if (reviews.length === 0) return null;
 
-  const duplicatedReviews = [...reviews, ...reviews];
+  const shouldAnimate = reviews.length > 3;
+  const displayReviews = shouldAnimate ? [...reviews, ...reviews] : reviews;
 
   return (
     <section id="reviews" className="bg-[#0B1020] py-20 overflow-hidden">
@@ -90,12 +91,9 @@ export function ReviewCarousel() {
         </div>
 
         <div className="relative">
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#0B1020] to-transparent z-10" />
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#0B1020] to-transparent z-10" />
-
-          <div className="carousel-track">
-            {duplicatedReviews.map((review, index) => (
-              <div key={`${review.id}-${index}`} className="w-80 flex-shrink-0 mx-3">
+          <div className={shouldAnimate ? "carousel-track" : "flex flex-wrap justify-center gap-6"}>
+            {displayReviews.map((review, index) => (
+              <div key={`${review.id}-${index}`} className={`w-80 flex-shrink-0 ${shouldAnimate ? 'mx-3' : ''}`}>
                 <div className="h-full rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
                   <div className="flex items-center justify-between gap-3">
                     <StarDisplay rating={review.rating} size="sm" />

@@ -14,7 +14,7 @@ import {
 } from '@/lib/api-response';
 
 const checkoutSchema = z.object({
-  planType: z.enum(['solo', 'studio', 'upgrade']),
+  planType: z.enum(['solo', 'studio', 'upgrade', 'business']),
 });
 
 // POST - Create checkout session
@@ -50,6 +50,9 @@ export async function POST(request: NextRequest) {
       return forbiddenResponse('Only the workspace owner can manage billing');
     }
 
+    // Determine if this is a Studio -> Business upgrade
+    const isUpgradeFromStudio = planType === 'business' && workspace.plan === 'STUDIO';
+
     // Validate purchase based on current plan
     if (planType === 'solo') {
       if (workspace.plan !== 'UNPAID') {
@@ -63,6 +66,13 @@ export async function POST(request: NextRequest) {
       if (workspace.plan !== 'SOLO') {
         return errorResponse('Upgrade is only available for Solo plan users', 400);
       }
+    } else if (planType === 'business') {
+      if (workspace.plan === 'BUSINESS') {
+        return errorResponse('You already have the Business plan', 400);
+      }
+      // Allow SOLO to purchase Business (full price, no special upgrade path)
+      // Allow STUDIO to purchase Business (with $10 upgrade fee via isUpgradeFromStudio)
+      // Allow UNPAID to purchase Business
     }
 
     // Create Stripe checkout session
@@ -72,16 +82,19 @@ export async function POST(request: NextRequest) {
       planType: planType as PlanType,
       successUrl: `${config.appUrl}/app/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${config.appUrl}/app/billing?canceled=true`,
+      isUpgradeFromStudio,
     });
 
     // Create pending purchase record
     const pricing = config.pricing[planType as keyof typeof config.pricing];
     
+    // For business, the amount recorded in DB is the recurring amount
+    // We could add the upgrade fee to the DB record, but for simplicity let's just record the plan amount
     await db.purchase.create({
       data: {
         workspaceId: workspace.id,
         stripeSessionId: checkoutSession.id,
-        type: planType.toUpperCase() as 'SOLO' | 'STUDIO' | 'UPGRADE',
+        type: planType.toUpperCase() as 'SOLO' | 'STUDIO' | 'UPGRADE' | 'BUSINESS',
         amount: pricing.amount,
         tax: pricing.tax,
         status: 'PENDING',
@@ -130,17 +143,18 @@ export async function GET(request: NextRequest) {
     }
 
     const isOwner = workspace.ownerId === session.userId;
+    
+    let maxMembers = 0;
+    if (workspace.plan === 'STUDIO') maxMembers = config.limits.studio.maxMembers;
+    else if (workspace.plan === 'SOLO') maxMembers = config.limits.solo.maxMembers;
+    else if (workspace.plan === 'BUSINESS') maxMembers = config.limits.business.maxMembers;
 
     return successResponse({
       plan: workspace.plan,
       isOwner,
       memberCount: workspace._count.members,
-      maxMembers: workspace.plan === 'STUDIO' 
-        ? config.limits.studio.maxMembers 
-        : workspace.plan === 'SOLO' 
-          ? config.limits.solo.maxMembers 
-          : 0,
-      canUpgrade: workspace.plan === 'SOLO' && isOwner,
+      maxMembers,
+      canUpgrade: (workspace.plan === 'SOLO' && isOwner) || (workspace.plan === 'STUDIO' && isOwner), // Can upgrade from SOLO (to Studio) or STUDIO (to Business)
       purchases: workspace.purchases.map((p) => ({
         id: p.id,
         type: p.type,
@@ -165,6 +179,11 @@ export async function GET(request: NextRequest) {
           amount: config.pricing.upgrade.amount / 100,
           tax: config.pricing.upgrade.tax / 100,
           total: config.pricing.upgrade.total / 100,
+        },
+        business: {
+          amount: config.pricing.business.amount / 100,
+          tax: config.pricing.business.tax / 100,
+          total: config.pricing.business.total / 100,
         },
       },
     });

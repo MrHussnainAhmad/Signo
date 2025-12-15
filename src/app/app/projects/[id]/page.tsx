@@ -60,6 +60,9 @@ interface Project {
   shareUrl: string;
   createdAt: string;
   updatedAt: string;
+  workspace: {
+    plan: 'UNPAID' | 'SOLO' | 'STUDIO';
+  };
   deliverables: Deliverable[];
   comments: Comment[];
   review: {
@@ -98,12 +101,34 @@ export default function ProjectDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const maxFileSize = useMemo(() => {
+    if (!project) return 100 * 1024 * 1024;
+    if (project.workspace.plan === 'STUDIO') return 2 * 1024 * 1024 * 1024; // 2GB
+    if (project.workspace.plan === 'SOLO') return 500 * 1024 * 1024; // 500MB
+    return 100 * 1024 * 1024; // 100MB
+  }, [project]);
+
+  const maxFileSizeLabel = useMemo(() => {
+     if (!project) return '100MB';
+     if (project.workspace.plan === 'STUDIO') return '2GB';
+     if (project.workspace.plan === 'SOLO') return '500MB';
+     return '100MB';
+  }, [project]);
+
   useEffect(() => {
     fetchProject();
+
+    const commentInterval = setInterval(() => fetchComments(true), 5000);
+    const projectInterval = setInterval(() => fetchProject(true), 60000);
+
+    return () => {
+      clearInterval(commentInterval);
+      clearInterval(projectInterval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  async function fetchProject() {
+  async function fetchProject(background = false) {
     try {
       // backend unchanged
       const response = await fetch(`/api/projects/${projectId}`);
@@ -112,13 +137,34 @@ export default function ProjectDetailPage() {
       if (data.success) {
         setProject(data.data.project);
       } else {
-        showError('Error', 'Project not found');
-        router.push('/app/projects');
+        if (!background) {
+          showError('Error', 'Project not found');
+          router.push('/app/projects');
+        }
       }
     } catch {
-      showError('Error', 'Failed to load project');
+      if (!background) showError('Error', 'Failed to load project');
     } finally {
-      setIsLoading(false);
+      if (!background) setIsLoading(false);
+    }
+  }
+
+  async function fetchComments(background = false) {
+    if (!project) return;
+    try {
+      const response = await fetch(`/api/projects/${projectId}/comments`);
+      const data = await response.json();
+
+      if (data.success) {
+        setProject((prev) => {
+          if (!prev) return null;
+          // Only update if comments changed (length or last ID) to avoid unnecessary re-renders
+          // But React is smart enough. For now just set it.
+          return { ...prev, comments: data.data.comments };
+        });
+      }
+    } catch (error) {
+      if (!background) console.error('Failed to fetch comments:', error);
     }
   }
 
@@ -239,20 +285,6 @@ export default function ProjectDetailPage() {
                 Copy share link
               </span>
             </Button>
-
-            <a
-              href={openClientHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex"
-            >
-              <Button variant="secondary">
-                <span className="inline-flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  Open client view
-                </span>
-              </Button>
-            </a>
           </div>
         }
       />
@@ -278,8 +310,8 @@ export default function ProjectDetailPage() {
                   <FileUpload
                     onUpload={handleUpload}
                     accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,video/*,audio/*"
-                    maxSize={100 * 1024 * 1024}
-                    hint="Max 100MB. Images, PDFs, documents, videos, and archives."
+                    maxSize={maxFileSize}
+                    hint={`Max ${maxFileSizeLabel}. Images, PDFs, documents, videos, and archives.`}
                   />
                 </div>
               )}
@@ -510,15 +542,6 @@ export default function ProjectDetailPage() {
               </dl>
 
               <div className="mt-6 grid grid-cols-1 gap-3">
-                <a href={project.shareUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="secondary" fullWidth>
-                    <span className="inline-flex items-center gap-2">
-                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                      Open client view
-                    </span>
-                  </Button>
-                </a>
-
                 <Link href="/app/projects">
                   <Button variant="secondary" fullWidth>
                     Back to projects

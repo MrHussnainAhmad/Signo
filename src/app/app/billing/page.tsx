@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 interface BillingData {
-  plan: 'UNPAID' | 'SOLO' | 'STUDIO';
+  plan: 'UNPAID' | 'SOLO' | 'STUDIO' | 'BUSINESS';
   isOwner: boolean;
   memberCount: number;
   maxMembers: number;
@@ -37,10 +37,11 @@ interface BillingData {
     solo: { amount: number; tax: number; total: number };
     studio: { amount: number; tax: number; total: number };
     upgrade: { amount: number; tax: number; total: number };
+    business: { amount: number; tax: number; total: number };
   };
 }
 
-type PlanKey = 'solo' | 'studio';
+type PlanKey = 'solo' | 'studio' | 'business';
 
 const planMeta: Record<PlanKey, { title: string; blurb: string }> = {
   solo: {
@@ -49,7 +50,11 @@ const planMeta: Record<PlanKey, { title: string; blurb: string }> = {
   },
   studio: {
     title: 'Studio',
-    blurb: 'For teams and agencies.',
+    blurb: 'For small teams.',
+  },
+  business: {
+    title: 'Business',
+    blurb: 'For growing agencies.',
   },
 };
 
@@ -57,39 +62,43 @@ const comparisonRows: Array<{
   label: string;
   solo: boolean | 'text';
   studio: boolean | 'text';
+  business: boolean | 'text';
   soloText?: string;
   studioText?: string;
+  businessText?: string;
 }> = [
-  { label: 'Unlimited projects', solo: true, studio: true },
-  { label: 'Unlimited deliverables', solo: true, studio: true },
-  { label: 'Client portal', solo: true, studio: true },
-  { label: 'Comments + approvals', solo: true, studio: true },
-  { label: 'Email notifications', solo: true, studio: true },
-  { label: 'User accounts', solo: 'text', studio: 'text', soloText: '1', studioText: 'Up to 5' },
-  { label: 'Workspace branding', solo: false, studio: true },
-  { label: 'Priority support', solo: false, studio: true },
-  { label: 'Advanced analytics', solo: false, studio: true },
+  { label: 'Unlimited projects', solo: true, studio: true, business: true },
+  { label: 'Unlimited deliverables', solo: true, studio: true, business: true },
+  { label: 'Client portal', solo: true, studio: true, business: true },
+  { label: 'Comments + approvals', solo: true, studio: true, business: true },
+  { label: 'Email notifications', solo: true, studio: true, business: true },
+  { label: 'User accounts', solo: 'text', studio: 'text', business: 'text', soloText: '1', studioText: 'Up to 5', businessText: 'Up to 10' },
+  { label: 'Workspace branding', solo: false, studio: true, business: true },
+  { label: 'Priority support', solo: false, studio: true, business: true },
+  { label: 'Advanced analytics', solo: false, studio: true, business: true },
 ];
 
 function MoneyBreakdown({
   amount,
   tax,
   total,
+  isMonthly = false,
 }: {
   amount: number;
   tax: number;
   total: number;
+  isMonthly?: boolean;
 }) {
   return (
     <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4">
       <div className="flex items-end justify-between gap-4">
         <div>
           <div className="text-4xl font-bold tracking-tight text-gray-900">${amount}</div>
-          <div className="mt-1 text-sm text-gray-500">One-time payment</div>
+          <div className="mt-1 text-sm text-gray-500">{isMonthly ? 'Per month' : 'One-time payment'}</div>
         </div>
         <div className="text-right">
-          <div className="text-sm text-gray-600">+ ${tax} tax</div>
-          <div className="mt-1 text-sm font-semibold text-gray-900">Total: ${total}</div>
+          <div className="text-sm text-gray-600">{tax > 0 ? `+ $${tax} tax` : 'No tax'}</div>
+          <div className="mt-1 text-sm font-semibold text-gray-900">Total: ${total}{isMonthly ? '/mo' : ''}</div>
         </div>
       </div>
     </div>
@@ -142,7 +151,7 @@ export default function BillingPage() {
     }
   }
 
-  async function handleCheckout(planType: 'solo' | 'studio' | 'upgrade') {
+  async function handleCheckout(planType: 'solo' | 'studio' | 'upgrade' | 'business') {
     setIsCheckingOut(planType);
     try {
       // backend untouched
@@ -166,9 +175,24 @@ export default function BillingPage() {
     }
   }
 
-  const upgradeText = useMemo(() => {
-    if (!data) return 'Upgrade to Studio';
-    return `Upgrade to Studio — $${data.pricing.upgrade.total}`;
+  const upgradeInfo = useMemo(() => {
+    if (!data) return { text: 'Upgrade', type: 'upgrade' as const };
+    
+    if (data.plan === 'SOLO') {
+      return { 
+        text: `Upgrade to Studio — $${data.pricing.upgrade.total}`, 
+        type: 'upgrade' as const 
+      };
+    }
+    
+    if (data.plan === 'STUDIO') {
+      return { 
+        text: 'Upgrade to Business ($10 + $49/mo)', 
+        type: 'business' as const 
+      };
+    }
+
+    return { text: 'Upgrade', type: 'upgrade' as const };
   }, [data]);
 
   if (isLoading) {
@@ -227,13 +251,13 @@ export default function BillingPage() {
           {data.canUpgrade && (
             <div className="mt-5">
               <Button
-                onClick={() => handleCheckout('upgrade')}
-                isLoading={isCheckingOut === 'upgrade'}
+                onClick={() => handleCheckout(upgradeInfo.type)}
+                isLoading={isCheckingOut === upgradeInfo.type}
                 disabled={!canPurchase}
                 fullWidth
               >
                 <span className="inline-flex items-center gap-2">
-                  {upgradeText}
+                  {upgradeInfo.text}
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </span>
               </Button>
@@ -264,11 +288,13 @@ export default function BillingPage() {
               </div>
 
               <p className="mt-3 text-sm text-gray-600">
-                {data.plan === 'STUDIO'
-                  ? 'Studio supports up to 5 members.'
-                  : data.plan === 'SOLO'
-                    ? 'Solo is for a single user.'
-                    : 'Purchase a plan to add members.'}
+                {data.plan === 'BUSINESS'
+                  ? 'Business supports up to 10 members.'
+                  : data.plan === 'STUDIO'
+                    ? 'Studio supports up to 5 members.'
+                    : data.plan === 'SOLO'
+                      ? 'Solo is for a single user.'
+                      : 'Purchase a plan to add members.'}
               </p>
             </div>
 
@@ -297,7 +323,7 @@ export default function BillingPage() {
             <div>
               <p className="text-sm font-semibold text-gray-900">Payments</p>
               <p className="mt-3 text-sm text-gray-600">
-                One-time purchases. No subscription renewals.
+                Purchase history and invoices.
               </p>
 
               <div className="mt-5 flex items-center gap-2 text-sm text-gray-600">
@@ -336,18 +362,20 @@ export default function BillingPage() {
           </div>
 
           {/* Mobile: stacked plan cards */}
-          <div className="md:hidden p-6 space-y-6">
-            {(['solo', 'studio'] as PlanKey[]).map((k) => {
+          <div className="lg:hidden p-6 space-y-6">
+            {(['solo', 'studio', 'business'] as PlanKey[]).map((k) => {
               const meta = planMeta[k];
               const price = data.pricing[k];
               const isStudio = k === 'studio';
+              const isBusiness = k === 'business';
+              const isMonthly = isBusiness;
 
               return (
                 <div
                   key={k}
                   className={[
                     'rounded-3xl border p-5',
-                    isStudio ? 'border-indigo-200 bg-indigo-50/40' : 'border-gray-200 bg-white',
+                    isBusiness ? 'border-purple-200 bg-purple-50/40' : isStudio ? 'border-indigo-200 bg-indigo-50/40' : 'border-gray-200 bg-white',
                   ].join(' ')}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -355,21 +383,26 @@ export default function BillingPage() {
                       <div className="flex items-center gap-2">
                         <h3 className="text-lg font-bold text-gray-900">{meta.title}</h3>
                         {isStudio && <Badge variant="indigo">Popular</Badge>}
+                        {isBusiness && <Badge variant="purple">Best Value</Badge>}
                       </div>
                       <p className="mt-1 text-sm text-gray-600">{meta.blurb}</p>
                     </div>
-                    <Badge variant="gray">One-time</Badge>
+                    <Badge variant="gray">{isMonthly ? 'Monthly' : 'One-time'}</Badge>
                   </div>
 
-                  <MoneyBreakdown amount={price.amount} tax={price.tax} total={price.total} />
+                  <MoneyBreakdown amount={price.amount} tax={price.tax} total={price.total} isMonthly={isMonthly} />
 
                   <ul className="mt-5 space-y-3 text-sm text-gray-700">
                     {comparisonRows
-                      .filter((r) => (k === 'solo' ? r.solo : r.studio) !== false)
+                      .filter((r) => {
+                         if (k === 'solo') return r.solo !== false;
+                         if (k === 'studio') return r.studio !== false;
+                         return r.business !== false;
+                      })
                       .map((r) => {
-                        const val = k === 'solo' ? r.solo : r.studio;
+                        const val = k === 'solo' ? r.solo : k === 'studio' ? r.studio : r.business;
                         const textVal =
-                          val === 'text' ? (k === 'solo' ? r.soloText : r.studioText) : null;
+                          val === 'text' ? (k === 'solo' ? r.soloText : k === 'studio' ? r.studioText : r.businessText) : null;
 
                         return (
                           <li key={r.label} className="flex items-start gap-3">
@@ -388,10 +421,10 @@ export default function BillingPage() {
                       onClick={() => handleCheckout(k)}
                       isLoading={isCheckingOut === k}
                       disabled={!canPurchase}
-                      variant={isStudio ? 'primary' : 'secondary'}
+                      variant={isBusiness ? 'primary' : isStudio ? 'primary' : 'secondary'}
                       fullWidth
                     >
-                      Buy {meta.title} — ${price.total}
+                      Buy {meta.title} — ${price.total}{isMonthly ? '/mo' : ''}
                     </Button>
 
                     {!canPurchase && (
@@ -407,25 +440,22 @@ export default function BillingPage() {
           </div>
 
           {/* Desktop: feature comparison table */}
-          <div className="hidden md:block">
-            <div className="grid grid-cols-12">
-              <div className="col-span-6 border-r border-gray-200 px-6 py-5">
+          <div className="hidden lg:block">
+            <div className="grid grid-cols-10">
+              <div className="col-span-4 border-r border-gray-200 px-6 py-5">
                 <p className="text-sm font-semibold text-gray-900">Features</p>
                 <p className="mt-1 text-sm text-gray-600">
-                  Compare Solo vs Studio.
+                  Compare plans.
                 </p>
               </div>
 
-              <div className="col-span-3 border-r border-gray-200 px-6 py-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold tracking-wide text-gray-500">SOLO</p>
-                    <p className="mt-1 text-lg font-bold text-gray-900">Solo</p>
-                    <p className="mt-1 text-sm text-gray-600">{planMeta.solo.blurb}</p>
-                  </div>
-                  <Badge variant="gray">One-time</Badge>
+              {/* Solo */}
+              <div className="col-span-2 border-r border-gray-200 px-4 py-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-lg font-bold text-gray-900">Solo</p>
+                  <Badge variant="gray">1x</Badge>
                 </div>
-
+                
                 <MoneyBreakdown
                   amount={data.pricing.solo.amount}
                   tax={data.pricing.solo.tax}
@@ -439,22 +469,20 @@ export default function BillingPage() {
                   variant="secondary"
                   fullWidth
                   className="mt-4"
+                  size="sm"
                 >
-                  Buy Solo — ${data.pricing.solo.total}
+                  Buy Solo
                 </Button>
               </div>
 
-              <div className="col-span-3 px-6 py-5 bg-indigo-50/40">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-semibold tracking-wide text-indigo-700">STUDIO</p>
-                      <Badge variant="indigo">Popular</Badge>
-                    </div>
-                    <p className="mt-1 text-lg font-bold text-gray-900">Studio</p>
-                    <p className="mt-1 text-sm text-gray-600">{planMeta.studio.blurb}</p>
+              {/* Studio */}
+              <div className="col-span-2 border-r border-gray-200 px-4 py-5 bg-indigo-50/30">
+                 <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-bold text-gray-900">Studio</p>
+                    <Badge variant="indigo">Pop</Badge>
                   </div>
-                  <Badge variant="gray">One-time</Badge>
+                  <Badge variant="gray">1x</Badge>
                 </div>
 
                 <MoneyBreakdown
@@ -469,21 +497,49 @@ export default function BillingPage() {
                   disabled={!canPurchase}
                   fullWidth
                   className="mt-4"
+                  size="sm"
                 >
-                  Buy Studio — ${data.pricing.studio.total}
+                  Buy Studio
+                </Button>
+              </div>
+
+              {/* Business */}
+               <div className="col-span-2 px-4 py-5 bg-purple-50/30">
+                 <div className="flex items-center justify-between mb-2">
+                  <p className="text-lg font-bold text-gray-900">Business</p>
+                  <Badge variant="purple">Mo</Badge>
+                </div>
+
+                <MoneyBreakdown
+                  amount={data.pricing.business.amount}
+                  tax={data.pricing.business.tax}
+                  total={data.pricing.business.total}
+                  isMonthly
+                />
+
+                <Button
+                  onClick={() => handleCheckout('business')}
+                  isLoading={isCheckingOut === 'business'}
+                  disabled={!canPurchase}
+                  variant="primary"
+                  fullWidth
+                  className="mt-4"
+                  size="sm"
+                >
+                  Buy Business
                 </Button>
               </div>
             </div>
 
             <div className="border-t border-gray-200">
               {comparisonRows.map((row) => (
-                <div key={row.label} className="grid grid-cols-12 border-b border-gray-100">
-                  <div className="col-span-6 border-r border-gray-100 px-6 py-4">
+                <div key={row.label} className="grid grid-cols-10 border-b border-gray-100">
+                  <div className="col-span-4 border-r border-gray-100 px-6 py-4">
                     <p className="text-sm font-medium text-gray-900">{row.label}</p>
                   </div>
 
-                  <div className="col-span-3 border-r border-gray-100 px-6 py-4">
-                    <div className="flex items-center justify-between">
+                  <div className="col-span-2 border-r border-gray-100 px-4 py-4">
+                    <div className="flex items-center justify-center">
                       {row.solo === 'text' ? (
                         <span className="text-sm font-semibold text-gray-900">{row.soloText}</span>
                       ) : (
@@ -492,12 +548,22 @@ export default function BillingPage() {
                     </div>
                   </div>
 
-                  <div className="col-span-3 px-6 py-4 bg-indigo-50/20">
-                    <div className="flex items-center justify-between">
+                  <div className="col-span-2 border-r border-gray-100 px-4 py-4 bg-indigo-50/20">
+                    <div className="flex items-center justify-center">
                       {row.studio === 'text' ? (
                         <span className="text-sm font-semibold text-gray-900">{row.studioText}</span>
                       ) : (
                         <CellCheck value={row.studio} />
+                      )}
+                    </div>
+                  </div>
+
+                   <div className="col-span-2 px-4 py-4 bg-purple-50/20">
+                    <div className="flex items-center justify-center">
+                      {row.business === 'text' ? (
+                        <span className="text-sm font-semibold text-gray-900">{row.businessText}</span>
+                      ) : (
+                        <CellCheck value={row.business} />
                       )}
                     </div>
                   </div>

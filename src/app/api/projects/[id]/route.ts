@@ -30,6 +30,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         workspaceId: session.workspaceId,
       },
       include: {
+        workspace: {
+          select: {
+            plan: true,
+          },
+        },
         deliverables: {
           orderBy: {
             createdAt: 'desc',
@@ -64,6 +69,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         shareUrl: `${config.appUrl}/p/${project.shareToken}`,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
+        workspace: {
+          plan: project.workspace.plan,
+        },
         deliverables: project.deliverables.map((d) => ({
           id: d.id,
           fileName: d.fileName,

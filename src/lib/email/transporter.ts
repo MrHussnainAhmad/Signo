@@ -6,6 +6,7 @@ let transporter: nodemailer.Transporter | null = null;
 export function getTransporter(): nodemailer.Transporter {
   if (!transporter) {
     transporter = nodemailer.createTransport({
+      pool: true,
       host: config.email.smtp.host,
       port: config.email.smtp.port,
       secure: config.email.smtp.port === 465,
@@ -13,6 +14,8 @@ export function getTransporter(): nodemailer.Transporter {
         user: config.email.smtp.user,
         pass: config.email.smtp.pass,
       },
+      maxConnections: 5,
+      maxMessages: 100,
     });
   }
   

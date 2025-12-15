@@ -2,7 +2,7 @@ export const APP_NAME = "Signo";
 
 export const config = {
   appName: APP_NAME,
-  appUrl: process.env.APP_URL || "https://signo-hypo.vercel.app",
+  appUrl: process.env.APP_URL || "http://localhost:3000",
 
   // Session
   sessionCookieName: process.env.SESSION_COOKIE_NAME || "signo_session",
@@ -26,6 +26,11 @@ export const config = {
       tax: 300, // $3
       total: 3200, // $32
     },
+    business: {
+      amount: 4900, // $49
+      tax: 0,
+      total: 4900,
+    },
     upgrade: {
       amount: 1500, // $15
       tax: 0,
@@ -40,6 +45,9 @@ export const config = {
     },
     studio: {
       maxMembers: 5,
+    },
+    business: {
+      maxMembers: 10,
     },
   },
 
@@ -61,6 +69,7 @@ export const config = {
     prices: {
       solo: process.env.STRIPE_SOLO_PRICE_ID || "",
       studio: process.env.STRIPE_STUDIO_PRICE_ID || "",
+      business: process.env.STRIPE_BUSINESS_PRICE_ID || "",
       upgrade: process.env.STRIPE_UPGRADE_PRICE_ID || "",
     },
   },
@@ -85,7 +94,7 @@ export const config = {
   },
 } as const;
 
-export type Plan = "UNPAID" | "SOLO" | "STUDIO";
+export type Plan = "UNPAID" | "SOLO" | "STUDIO" | "BUSINESS";
 export type Role = "OWNER" | "MEMBER";
 export type ProjectStatus =
   | "WAITING_FOR_CLIENT"

@@ -59,9 +59,16 @@ export async function GET(request: NextRequest) {
     }
 
     const isOwner = workspace.ownerId === session.userId;
-    const maxMembers = workspace.plan === 'STUDIO'
-      ? config.limits.studio.maxMembers
-      : config.limits.solo.maxMembers;
+    
+    let maxMembers = config.limits.solo.maxMembers;
+    if (workspace.plan === 'STUDIO') {
+      maxMembers = config.limits.studio.maxMembers;
+    } else if (workspace.plan === 'BUSINESS') {
+      maxMembers = config.limits.business.maxMembers;
+    }
+
+    const canInvite = isOwner && (workspace.plan === 'STUDIO' || workspace.plan === 'BUSINESS') && 
+      (workspace.members.length + workspace.invites.length) < maxMembers;
 
     return successResponse({
       members: workspace.members.map((m) => ({
@@ -74,8 +81,7 @@ export async function GET(request: NextRequest) {
       })),
       pendingInvites: isOwner ? workspace.invites : [],
       isOwner,
-      canInvite: isOwner && workspace.plan === 'STUDIO' && 
-        (workspace.members.length + workspace.invites.length) < maxMembers,
+      canInvite,
       maxMembers,
       currentCount: workspace.members.length,
       pendingCount: workspace.invites.length,
