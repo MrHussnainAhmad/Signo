@@ -80,6 +80,8 @@ const comparisonRows: Array<{
 }> = [
   { label: 'Unlimited projects', solo: true, studio: true, business: true },
   { label: 'Unlimited deliverables', solo: true, studio: true, business: true },
+  { label: 'Storage limit', solo: 'text', studio: 'text', business: 'text', soloText: '25GB', studioText: '500GB', businessText: '1TB' },
+  { label: 'Max file size', solo: 'text', studio: 'text', business: 'text', soloText: '1GB', studioText: '5GB', businessText: 'Unlimited' },
   { label: 'Client portal', solo: true, studio: true, business: true },
   { label: 'Comments + approvals', solo: true, studio: true, business: true },
   { label: 'Email notifications', solo: true, studio: true, business: true },

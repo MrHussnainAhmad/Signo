@@ -16,7 +16,7 @@ const plans = [
     features: [
       'Unlimited projects',
       '25GB total storage',
-      '500MB max file size',
+      '1GB max file size',
       'Client approval page',
       'Comments + approvals',
       'Email notifications',
@@ -34,7 +34,7 @@ const plans = [
     features: [
       'Everything in Solo',
       '500GB total storage',
-      '1GB max file size',
+      '5GB max file size',
       'Up to 5 team members',
       'Team collaboration',
       'Workspace branding',
@@ -52,7 +52,7 @@ const plans = [
     features: [
       'Everything in Studio',
       '1TB total storage',
-      '2GB max file size',
+      'Unlimited file size',
       'Up to 10 team members',
       'Priority support',
       'Dedicated account manager',
