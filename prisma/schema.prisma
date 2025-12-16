@@ -122,7 +122,7 @@ model Deliverable {
   downloadLink  String?
   fileName      String
   mimeType      String
-  fileSize      Int?
+  fileSize      Float?
   versionNumber Int      @default(1)
   createdAt     DateTime @default(now())
 

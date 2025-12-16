@@ -107,12 +107,12 @@ export default function ProjectDetailPage() {
   }, [project?.workspace.plan]);
 
   const maxFileSizeLabel = useMemo(() => {
-     const plan = project?.workspace.plan;
-     if (!plan) return '100MB';
-     if (plan === 'BUSINESS') return 'Unlimited';
-     if (plan === 'STUDIO') return '5GB';
-     if (plan === 'SOLO') return '1GB';
-     return '100MB';
+    const plan = project?.workspace.plan;
+    if (!plan) return '100MB';
+    if (plan === 'BUSINESS') return 'Unlimited';
+    if (plan === 'STUDIO') return '5GB';
+    if (plan === 'SOLO') return '1GB';
+    return '100MB';
   }, [project?.workspace.plan]);
 
   useEffect(() => {
@@ -181,7 +181,7 @@ export default function ProjectDetailPage() {
   async function handleUpload(file: File) {
     setUploadProgress(0);
     setUploadDetails({ speed: '0 MB/s', uploaded: 0, total: file.size });
-    
+
     try {
       // 1. Init Upload
       const initResponse = await fetch(`/api/projects/${projectId}/deliverables`, {
@@ -205,69 +205,79 @@ export default function ProjectDetailPage() {
 
       let fileId: string | undefined;
 
-      // 2. Upload to Drive (Directly) with Progress
-      try {
+      // 2. Chunked Upload to Drive
+      // Google recommends 256KB multiples. 10MB or 20MB is reasonable.
+      const CHUNK_SIZE = 20 * 1024 * 1024;
+      const totalSize = file.size;
+      let start = 0;
+
+      let startTime = Date.now();
+      let lastLoaded = 0;
+
+      while (start < totalSize) {
+        const end = Math.min(start + CHUNK_SIZE, totalSize);
+        const chunk = file.slice(start, end);
+
+        // Retry logic for chunks could be added here, but simple sequential for now
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open('PUT', uploadUrl);
-          
-          let startTime = Date.now();
-          let lastLoaded = 0;
+          // Content-Range: bytes START-END/TOTAL
+          xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${totalSize}`);
 
           xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
-              const now = Date.now();
-              const percentComplete = (event.loaded / event.total) * 100;
+              const currentChunkLoaded = event.loaded;
+              const totalUploadedSoFar = start + currentChunkLoaded;
+              const percentComplete = (totalUploadedSoFar / totalSize) * 100;
               setUploadProgress(percentComplete);
 
-              // Calculate speed every 500ms
-              if (now - startTime > 500) {
-                const diffTime = (now - startTime) / 1000; // seconds
-                const diffLoaded = event.loaded - lastLoaded;
-                const bps = diffLoaded / diffTime;
-                
-                const speed = bps > 1024 * 1024 
+              const now = Date.now();
+              if (now - startTime > 1000) {
+                const diffTime = (now - startTime) / 1000;
+                const diffUploaded = totalUploadedSoFar - lastLoaded;
+                const bps = diffUploaded / diffTime;
+                const speed = bps > 1024 * 1024
                   ? `${(bps / (1024 * 1024)).toFixed(1)} MB/s`
                   : `${(bps / 1024).toFixed(1)} KB/s`;
 
                 setUploadDetails({
                   speed,
-                  uploaded: event.loaded,
-                  total: event.total
+                  uploaded: totalUploadedSoFar,
+                  total: totalSize
                 });
 
                 startTime = now;
-                lastLoaded = event.loaded;
+                lastLoaded = totalUploadedSoFar;
               }
             }
           };
 
           xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
+            // 308 = Resume Incomplete (Good, asking for next chunk)
+            // 200/201 = Upload Complete
+            if (xhr.status === 308) {
+              resolve();
+            } else if (xhr.status >= 200 && xhr.status < 300) {
               try {
                 const driveFile = JSON.parse(xhr.responseText);
                 fileId = driveFile.id;
-                resolve();
               } catch (e) {
-                // If response is not JSON or empty (sometimes happens with CORS issues masking response)
-                // We treat it as success-but-unknown-id -> Recovery flow
                 console.warn('Could not parse Drive response:', e);
-                resolve(); 
               }
+              resolve();
             } else {
-              reject(new Error(`Drive upload failed with status ${xhr.status}`));
+              reject(new Error(`Chunk upload failed with status ${xhr.status}`));
             }
           };
 
           xhr.onerror = () => reject(new Error('Network error during upload'));
           xhr.onabort = () => reject(new Error('Upload aborted'));
 
-          xhr.send(file);
+          xhr.send(chunk);
         });
-      } catch (error) {
-        // CORS errors often appear here as NetworkError
-        console.warn('Drive upload network error (likely CORS), attempting recovery:', error);
-        // We proceed to finalize WITHOUT fileId, letting backend find the file.
+
+        start = end;
       }
 
       // 3. Finalize Upload
@@ -276,7 +286,7 @@ export default function ProjectDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'finalize',
-          fileId, // Might be undefined if CORS blocked response
+          fileId, // Might be undefined if CORS blocked response but upload succeeded
           fileName: file.name,
         }),
       });
@@ -291,7 +301,7 @@ export default function ProjectDetailPage() {
       fetchProject();
     } catch (error) {
       console.error('Upload flow error:', error);
-      throw error; // Re-throw to show error in FileUpload component
+      throw error;
     } finally {
       setUploadProgress(undefined);
       setUploadDetails(undefined);
