@@ -33,7 +33,7 @@ export async function uploadImage(
 ): Promise<CloudinaryUploadResult> {
   return new Promise((resolve, reject) => {
     const uploadOptions: Record<string, unknown> = {
-      folder: `signo/${options.folder}`,
+      folder: `sendwork/${options.folder}`,
       resource_type: 'image',
       allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
       transformation: [

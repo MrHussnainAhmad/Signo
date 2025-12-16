@@ -39,7 +39,7 @@ export function Footer() {
             </p>
 
             <p className="mt-3 text-sm text-gray-500 max-w-sm">
-              Files are stored in Signo storage for approvals and automatically deleted after 3 months.
+              Files are stored in SendWork storage for approvals and automatically deleted after 3 months.
             </p>
           </div>
 

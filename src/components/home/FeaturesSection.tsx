@@ -52,7 +52,7 @@ const bento = [
     icon: Shield,
     title: 'Secure hosting',
     description:
-      'Files are stored in Signo storage for sharing and approvals. Ownership remains yours.',
+      'Files are stored in SendWork storage for sharing and approvals. Ownership remains yours.',
     className: 'md:col-span-1',
   },
 ];

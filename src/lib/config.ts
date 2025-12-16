@@ -1,11 +1,11 @@
-export const APP_NAME = "Signo";
+export const APP_NAME = "SendWork";
 
 export const config = {
   appName: APP_NAME,
   appUrl: process.env.APP_URL || "https://signo-hypo.vercel.app",
 
   // Session
-  sessionCookieName: process.env.SESSION_COOKIE_NAME || "signo_session",
+  sessionCookieName: process.env.SESSION_COOKIE_NAME || "sendwork_session",
   jwtSecret: process.env.JWT_SECRET!,
 
   // Token expiry times
@@ -59,7 +59,7 @@ export const config = {
 
   // Email
   email: {
-    from: process.env.EMAIL_FROM || `${APP_NAME} <noreply@signo.com>`,
+    from: process.env.EMAIL_FROM || `${APP_NAME} <noreply@sendwork.com>`,
     smtp: {
       host: process.env.SMTP_HOST!,
       port: parseInt(process.env.SMTP_PORT || "587"),

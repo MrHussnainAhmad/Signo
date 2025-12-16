@@ -58,7 +58,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <span className="text-2xl font-bold text-gray-900">Signo</span>
+            <span className="text-2xl font-bold text-gray-900">SendWork</span>
           </a>
         </div>
 
