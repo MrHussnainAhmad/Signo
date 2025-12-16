@@ -56,8 +56,8 @@ function ClientDashboardContent() {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/p/login');
-      router.refresh();
+      // Hard redirect to clear client state
+      window.location.href = '/p/login';
     } catch (error) {
       console.error('Logout failed:', error);
       router.push('/p/login');
@@ -96,7 +96,7 @@ function ClientDashboardContent() {
                     <StatusBadge status={project.status} size="sm" />
                   </div>
                 </div>
-                
+
                 <Link href={`/p/${project.shareToken}`}>
                   <Button variant="secondary" size="sm">
                     <span className="inline-flex items-center gap-2">
