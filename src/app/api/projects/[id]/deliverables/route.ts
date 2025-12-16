@@ -193,7 +193,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         while (attempts < 3) {
           await new Promise((resolve) => setTimeout(resolve, 2000));
           metadata = await findLatestFileInProject(project.id, fileName);
-          
+
           if (metadata) {
             break;
           }
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           downloadLink: metadata.webContentLink || '',
           fileName: metadata.name || fileName,
           mimeType: metadata.mimeType || 'application/octet-stream',
-          fileSize: parseInt(metadata.size || '0', 10),
+          fileSize: parseFloat(metadata.size || '0'),
           versionNumber,
         },
       });
