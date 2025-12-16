@@ -15,9 +15,9 @@ const plans = [
     total: 22,
     features: [
       'Unlimited projects',
+      'One project at a time',
       '25GB total storage',
       '1GB max file size',
-      'Client approval page',
       'Comments + approvals',
       'Email notifications',
     ],
@@ -33,11 +33,11 @@ const plans = [
     total: 32,
     features: [
       'Everything in Solo',
+      '5 Projects at a time',
       '500GB total storage',
       '5GB max file size',
       'Up to 5 team members',
       'Team collaboration',
-      'Workspace branding',
     ],
     cta: 'Get Studio',
     popular: true,

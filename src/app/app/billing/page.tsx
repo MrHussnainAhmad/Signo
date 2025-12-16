@@ -79,7 +79,8 @@ const comparisonRows: Array<{
   businessText?: string;
 }> = [
   { label: 'Unlimited projects', solo: true, studio: true, business: true },
-  { label: 'Unlimited deliverables', solo: true, studio: true, business: true },
+  { label: 'Limited projects at time?', solo: true, studio: true, business: false },
+  { label: 'Unlimited deliverables', solo: false, studio: true, business: true },
   { label: 'Storage limit', solo: 'text', studio: 'text', business: 'text', soloText: '25GB', studioText: '500GB', businessText: '1TB' },
   { label: 'Max file size', solo: 'text', studio: 'text', business: 'text', soloText: '1GB', studioText: '5GB', businessText: 'Unlimited' },
   { label: 'Client portal', solo: true, studio: true, business: true },
@@ -88,7 +89,6 @@ const comparisonRows: Array<{
   { label: 'User accounts', solo: 'text', studio: 'text', business: 'text', soloText: '1', studioText: 'Up to 5', businessText: 'Up to 10' },
   { label: 'Workspace branding', solo: false, studio: true, business: true },
   { label: 'Priority support', solo: false, studio: true, business: true },
-  { label: 'Advanced analytics', solo: false, studio: true, business: true },
 ];
 
 function MoneyBreakdown({
@@ -517,7 +517,7 @@ export default function BillingPage() {
                  <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <p className="text-lg font-bold text-gray-900">Studio</p>
-                    <Badge variant="indigo">Pop</Badge>
+                    <Badge variant="indigo">Popular</Badge>
                   </div>
                   <Badge variant="gray">1x</Badge>
                 </div>
@@ -544,7 +544,7 @@ export default function BillingPage() {
                <div className="col-span-2 px-4 py-5 bg-purple-50/30">
                  <div className="flex items-center justify-between mb-2">
                   <p className="text-lg font-bold text-gray-900">Business</p>
-                  <Badge variant="purple">Mo</Badge>
+                  <Badge variant="purple">Monthly</Badge>
                 </div>
 
                 <MoneyBreakdown

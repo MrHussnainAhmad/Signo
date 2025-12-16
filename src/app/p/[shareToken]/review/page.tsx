@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { ClientLayout } from '@/components/layout/ClientLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +19,7 @@ import {
 
 function ReviewContent() {
   const params = useParams();
+  const router = useRouter();
   const { success, error: showError } = useToast();
   const shareToken = params.shareToken as string;
 
@@ -84,8 +85,8 @@ function ReviewContent() {
 
       if (response.ok) {
         success('Thank You!', 'Your review has been submitted');
-        setExistingReview(data.data.review);
-        setCanReview(false);
+        // Redirect to client dashboard
+        router.push('/p/');
       } else {
         showError('Error', data.error || 'Failed to submit review');
       }
