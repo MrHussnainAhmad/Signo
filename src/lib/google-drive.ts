@@ -93,7 +93,7 @@ export async function getResumableUploadUrl(
     drive = client;
     // We need the auth client to get headers
     // @ts-ignore - accessing auth from drive instance or recreating it
-    auth = client.context._options.auth; 
+    auth = client.context._options.auth;
   } catch (authError: any) {
     console.error("❌ Google Auth Error:", authError?.message);
     throw new Error(`Google Drive authentication failed: ${authError?.message}`);
@@ -101,10 +101,10 @@ export async function getResumableUploadUrl(
 
   try {
     const projectFolderId = await getOrCreateProjectFolder(drive, projectId);
-    
+
     // Get auth headers
     const headers = await auth.getRequestHeaders();
-    
+
     // Initiate resumable upload
     const response = await fetch(
       "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable",
@@ -188,9 +188,11 @@ export async function uploadToGoogleDrive(params: UploadFileParams): Promise<Upl
     console.log("🔓 Setting file permissions...");
     await drive.permissions.create({
       fileId: file.id,
+      supportsAllDrives: true,
       requestBody: {
         role: "reader",
         type: "anyone",
+        allowFileDiscovery: false,
       },
     });
 
@@ -238,16 +240,24 @@ export async function uploadToGoogleDrive(params: UploadFileParams): Promise<Upl
 // Set file permissions to public
 export async function setFilePublic(driveFileId: string): Promise<void> {
   const drive = getGoogleDriveClient();
+  console.log(`🔓 Attempting to set public permissions for file: ${driveFileId}`);
   try {
-    await drive.permissions.create({
+    const result = await drive.permissions.create({
       fileId: driveFileId,
+      supportsAllDrives: true, // Crucial for some Drive configurations
       requestBody: {
         role: "reader",
         type: "anyone",
+        allowFileDiscovery: false, // strictly link-only
       },
     });
+    console.log(`✅ Permissions updated for ${driveFileId}:`, result.status);
   } catch (error: any) {
     console.error("Failed to set public permissions:", error);
+    // Log extended error details
+    if (error.response) {
+      console.error("Error response:", JSON.stringify(error.response.data));
+    }
     throw new Error(`Failed to make file public: ${extractGoogleErrorMessage(error)}`);
   }
 }
@@ -261,7 +271,7 @@ export async function verifyFileInProject(driveFileId: string, projectId: string
       fileId: driveFileId,
       fields: "parents",
     });
-    
+
     return file.data.parents?.includes(projectFolderId) || false;
   } catch (error) {
     console.error("Verification failed:", error);
@@ -271,16 +281,16 @@ export async function verifyFileInProject(driveFileId: string, projectId: string
 
 // Find latest file in project (Fallback for CORS issues)
 export async function findLatestFileInProject(
-  projectId: string, 
+  projectId: string,
   fileName: string
 ): Promise<{ id: string; name: string; mimeType: string; size: string; webViewLink: string; webContentLink: string } | null> {
   const drive = getGoogleDriveClient();
   try {
     const projectFolderId = await getOrCreateProjectFolder(drive, projectId);
-    
+
     // Escape single quotes for query
     const safeName = fileName.replace(/'/g, "\\'");
-    
+
     const response = await drive.files.list({
       q: `name = '${safeName}' and '${projectFolderId}' in parents and trashed = false`,
       orderBy: 'createdTime desc',
@@ -292,7 +302,7 @@ export async function findLatestFileInProject(
       // @ts-ignore - google types are partial but we requested fields
       return response.data.files[0];
     }
-    
+
     return null;
   } catch (error) {
     console.error("Find latest file failed:", error);
