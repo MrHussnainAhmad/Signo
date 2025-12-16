@@ -130,9 +130,35 @@ export async function POST(request: NextRequest) {
       return forbiddenResponse('Please purchase a plan to create projects');
     }
 
+    // Check project limits
+    const planConfig = config.limits[workspace.plan.toLowerCase() as keyof typeof config.limits];
+    if (planConfig && planConfig.maxActiveProjects) {
+      const activeProjectsCount = await db.project.count({
+        where: {
+          workspaceId: workspace.id,
+          status: {
+            notIn: ['APPROVED', 'DELETED'],
+          },
+        },
+      });
+
+      if (activeProjectsCount >= planConfig.maxActiveProjects) {
+        let upgradePlan = 'Studio';
+        if (workspace.plan === 'STUDIO') upgradePlan = 'Business';
+
+        return errorResponse('Project limit reached', 403, {
+          code: 'PLAN_LIMIT_REACHED',
+          currentPlan: workspace.plan,
+          limit: planConfig.maxActiveProjects,
+          upgradeTo: upgradePlan,
+          message: `You can create ${planConfig.maxActiveProjects} project(s) at a time. Complete existing projects or upgrade to ${upgradePlan}.`
+        });
+      }
+    }
+
     // Generate unique share token
     let shareToken = generateShareToken();
-    
+
     // Ensure token is unique
     let tokenExists = await db.project.findUnique({ where: { shareToken } });
     while (tokenExists) {

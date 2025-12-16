@@ -7,7 +7,8 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
-import { FolderPlus, UserRound, Mail, Info, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ConfirmModal } from '@/components/ui/Modal';
+import { FolderPlus, UserRound, Mail, Info, ArrowLeft, ArrowRight, Lock } from 'lucide-react';
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -20,6 +21,13 @@ export default function NewProjectPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+
+  const [limitModalProps, setLimitModalProps] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    upgradeTo: string;
+  }>({ isOpen: false, title: '', message: '', upgradeTo: '' });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -42,7 +50,26 @@ export default function NewProjectPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.errors) {
+        if (data.code === 'PLAN_LIMIT_REACHED' || response.status === 403) {
+          // Handle specific limit error
+          if (data.menu || data.code === 'PLAN_LIMIT_REACHED') {
+            setLimitModalProps({
+              isOpen: true,
+              title: 'Project limit reached',
+              message: data.message || 'You have reached the project limit for your plan.',
+              upgradeTo: data.upgradeTo || 'Studio'
+            });
+          } else if (data.errors) {
+            // Validation errors
+            const fieldErrors: Record<string, string> = {};
+            Object.entries(data.errors).forEach(([key, value]) => {
+              fieldErrors[key] = (value as string[])[0];
+            });
+            setErrors(fieldErrors);
+          } else {
+            showError('Access Denied', data.error || 'You cannot create more projects.');
+          }
+        } else if (data.errors) {
           const fieldErrors: Record<string, string> = {};
           Object.entries(data.errors).forEach(([key, value]) => {
             fieldErrors[key] = (value as string[])[0];
@@ -185,6 +212,17 @@ export default function NewProjectPage() {
           </Card>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={limitModalProps.isOpen}
+        onClose={() => setLimitModalProps(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={() => router.push('/app/billing')}
+        title={limitModalProps.title}
+        message={limitModalProps.message}
+        confirmText={`Upgrade to ${limitModalProps.upgradeTo}`}
+        cancelText="Cancel"
+        variant="primary" // or verify if there is a 'premium' variant, but primary is fine
+      />
     </div>
   );
 }

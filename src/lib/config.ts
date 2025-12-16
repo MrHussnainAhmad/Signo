@@ -42,16 +42,19 @@ export const config = {
   limits: {
     solo: {
       maxMembers: 1,
+      maxActiveProjects: 1,
       maxFileSize: 1 * 1024 * 1024 * 1024, // 1GB
       maxStorage: 25 * 1024 * 1024 * 1024, // 25GB
     },
     studio: {
       maxMembers: 5,
+      maxActiveProjects: 5,
       maxFileSize: 5 * 1024 * 1024 * 1024, // 5GB
       maxStorage: 500 * 1024 * 1024 * 1024, // 500GB
     },
     business: {
       maxMembers: 10,
+      maxActiveProjects: 100, // Unlimited effectively
       maxFileSize: 5 * 1024 * 1024 * 1024 * 1024, // 5TB (Unlimited)
       maxStorage: 1 * 1024 * 1024 * 1024 * 1024, // 1TB
     },
