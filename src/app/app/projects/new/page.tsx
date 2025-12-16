@@ -50,34 +50,48 @@ export default function NewProjectPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.code === 'PLAN_LIMIT_REACHED' || response.status === 403) {
-          // Handle specific limit error
-          if (data.menu || data.code === 'PLAN_LIMIT_REACHED') {
+        // Check for specific limit error (nested in errors object)
+        const isLimitError = data.errors?.code === 'PLAN_LIMIT_REACHED';
+
+        if (isLimitError || response.status === 403) {
+          if (isLimitError) {
             setLimitModalProps({
               isOpen: true,
               title: 'Project limit reached',
-              message: data.message || 'You have reached the project limit for your plan.',
-              upgradeTo: data.upgradeTo || 'Studio'
+              message: data.errors.message || 'You have reached the project limit for your plan.',
+              upgradeTo: data.errors.upgradeTo || 'Studio'
             });
-          } else if (data.errors) {
-            // Validation errors
-            const fieldErrors: Record<string, string> = {};
-            Object.entries(data.errors).forEach(([key, value]) => {
-              fieldErrors[key] = (value as string[])[0];
-            });
-            setErrors(fieldErrors);
-          } else {
-            showError('Access Denied', data.error || 'You cannot create more projects.');
+            return;
           }
-        } else if (data.errors) {
-          const fieldErrors: Record<string, string> = {};
-          Object.entries(data.errors).forEach(([key, value]) => {
-            fieldErrors[key] = (value as string[])[0];
-          });
-          setErrors(fieldErrors);
-        } else {
-          showError('Error', data.error || 'Failed to create project');
+
+          // Fallback for generic 403 without specific code
+          if (response.status === 403 && !data.errors) {
+            showError('Access Denied', data.error || 'You cannot create more projects.');
+            return;
+          }
         }
+
+        // Handle validation errors (Record<string, string[]>)
+        if (data.errors) {
+          try {
+            const fieldErrors: Record<string, string> = {};
+            // Safety check to ensure we only process array-like errors (validation style)
+            Object.entries(data.errors).forEach(([key, value]) => {
+              if (Array.isArray(value)) {
+                fieldErrors[key] = (value as string[])[0];
+              }
+            });
+
+            if (Object.keys(fieldErrors).length > 0) {
+              setErrors(fieldErrors);
+              return;
+            }
+          } catch (e) {
+            console.error("Failed to parse validation errors", e);
+          }
+        }
+
+        showError('Error', data.error || 'Failed to create project');
         return;
       }
 
