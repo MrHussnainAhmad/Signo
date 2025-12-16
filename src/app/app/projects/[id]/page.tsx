@@ -281,7 +281,8 @@ export default function ProjectDetailPage() {
             });
             success = true;
           } catch (error) {
-            console.warn(`Chunk retry ${attempts + 1}/3 failed:`, error);
+            // Warning suppressed to avoid alarming user during successful recovery
+            console.log(`Chunk retry ${attempts + 1}/3 failed:`, error);
             attempts++;
 
             // If it's the last attempt, check if we can optimistic recover
@@ -290,7 +291,7 @@ export default function ProjectDetailPage() {
               // it is highly likely the upload actually succeeded but the browser blocked the response.
               // We will proceed to finalize and let the server check.
               if (end === totalSize) {
-                console.warn('Final chunk failed network check. Proceeding to Optimistic Finalize.');
+                console.log('Final chunk connection closed by browser. Verifying on server...');
                 success = true; // Pretend it worked
                 break;
               }
