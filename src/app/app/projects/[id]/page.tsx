@@ -61,7 +61,7 @@ interface Project {
   createdAt: string;
   updatedAt: string;
   workspace: {
-    plan: 'UNPAID' | 'SOLO' | 'STUDIO';
+    plan: 'UNPAID' | 'SOLO' | 'STUDIO' | 'BUSINESS';
   };
   deliverables: Deliverable[];
   comments: Comment[];
@@ -747,7 +747,7 @@ export default function ProjectDetailPage() {
                   <dt className="text-gray-500">Share link</dt>
                   <dd className="text-right">
                     <button
-                      onClick={copyShareLink}
+                      onClick={handleCopyShareLink}
                       className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 hover:text-indigo-800"
                       type="button"
                     >
