@@ -16,6 +16,7 @@ interface FileUploadProps {
   uploadSpeed?: string;
   uploadedBytes?: number;
   totalBytes?: number;
+  onCancel?: () => void;
 }
 
 export function FileUpload({
@@ -30,6 +31,7 @@ export function FileUpload({
   uploadSpeed,
   uploadedBytes,
   totalBytes,
+  onCancel,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -156,11 +158,27 @@ export function FileUpload({
               <div className="w-full">
                 <div className="flex justify-between mb-1 text-sm font-medium text-gray-700">
                   <span>Uploading...</span>
-                  <span>{Math.round(progress)}%</span>
+                  <div className="flex items-center gap-2">
+                    <span>{Math.round(progress)}%</span>
+                    {onCancel && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCancel();
+                        }}
+                        className="text-gray-400 hover:text-red-600 transition-colors"
+                        title="Cancel upload"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-                  <div 
-                    className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-out" 
+                  <div
+                    className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-out"
                     style={{ width: `${Math.max(5, progress)}%` }}
                   ></div>
                 </div>
@@ -175,6 +193,17 @@ export function FileUpload({
               <>
                 <Spinner size="lg" />
                 <p className="mt-4 text-sm font-medium text-gray-700">Uploading...</p>
+                {onCancel && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCancel();
+                    }}
+                    className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Cancel
+                  </button>
+                )}
               </>
             )}
           </div>

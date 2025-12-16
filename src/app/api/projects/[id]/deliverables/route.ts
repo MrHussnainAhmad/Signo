@@ -255,6 +255,38 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       });
     }
 
+    // --- Action: Cancel ---
+    if (action === 'cancel') {
+      const { uploadUrl } = body;
+      if (!uploadUrl || typeof uploadUrl !== 'string') {
+        return errorResponse('Upload URL is required for cancellation', 400);
+      }
+
+      try {
+        // Delete the resumable session
+        const response = await fetch(uploadUrl, {
+          method: 'DELETE',
+          headers: {
+            // Some Google APIs require content-length 0 for delete
+            'Content-Length': '0'
+          }
+        });
+
+        // 404 means already gone (success), 2xx means deleted
+        if (response.ok || response.status === 404 || response.status === 410) {
+          return successResponse({ message: 'Upload session cancelled' });
+        } else {
+          console.error('Failed to cancel session:', response.status, await response.text());
+          // return success anyway to client, as we can't do much else
+          return successResponse({ message: 'Upload session cancelled (forced)' });
+        }
+      } catch (error) {
+        console.error('Error cancelling session:', error);
+        // Non-blocking error
+        return successResponse({ message: 'Upload session cancelled (error ignored)' });
+      }
+    }
+
     return errorResponse('Invalid action', 400);
 
   } catch (error) {

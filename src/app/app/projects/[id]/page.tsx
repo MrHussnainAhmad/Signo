@@ -97,6 +97,11 @@ export default function ProjectDetailPage() {
   const [uploadProgress, setUploadProgress] = useState<number | undefined>(undefined);
   const [uploadDetails, setUploadDetails] = useState<{ speed: string; uploaded: number; total: number } | undefined>(undefined);
 
+  // Ref for cancellation
+  const activeXhrRef = React.useRef<XMLHttpRequest | null>(null);
+  const isCancelledRef = React.useRef(false);
+  const activeUploadUrlRef = React.useRef<string | null>(null);
+
   const maxFileSize = useMemo(() => {
     const plan = project?.workspace.plan;
     if (!plan) return 100 * 1024 * 1024;
@@ -178,9 +183,47 @@ export default function ProjectDetailPage() {
     }
   }
 
+  async function handleCancelUpload() {
+    if (isCancelledRef.current) return;
+    isCancelledRef.current = true;
+
+    // Abort current XHR
+    if (activeXhrRef.current) {
+      activeXhrRef.current.abort();
+      activeXhrRef.current = null;
+    }
+
+    // Cleanup session
+    if (activeUploadUrlRef.current) {
+      try {
+        await fetch(`/api/projects/${projectId}/deliverables`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'cancel',
+            uploadUrl: activeUploadUrlRef.current
+          })
+        });
+        console.log('Upload session cancelled and cleaned up');
+      } catch (e) {
+        console.error('Failed to cleanup session:', e);
+      }
+      activeUploadUrlRef.current = null;
+    }
+
+    setUploadProgress(undefined);
+    setUploadDetails(undefined);
+    success('Upload Cancelled', 'The upload was cancelled and data removed.');
+  }
+
   async function handleUpload(file: File) {
     setUploadProgress(0);
     setUploadDetails({ speed: '0 MB/s', uploaded: 0, total: file.size });
+
+    // Reset Cancel State
+    isCancelledRef.current = false;
+    activeXhrRef.current = null;
+    activeUploadUrlRef.current = null;
 
     try {
       // 1. Init Upload
@@ -202,6 +245,7 @@ export default function ProjectDetailPage() {
       }
 
       const { uploadUrl } = initData.data;
+      activeUploadUrlRef.current = uploadUrl;
 
       let fileId: string | undefined;
 
@@ -214,6 +258,8 @@ export default function ProjectDetailPage() {
       let lastLoaded = 0;
 
       while (start < totalSize) {
+        if (isCancelledRef.current) throw new Error('Upload cancelled');
+
         const end = Math.min(start + CHUNK_SIZE, totalSize);
         const chunk = file.slice(start, end);
 
@@ -222,9 +268,13 @@ export default function ProjectDetailPage() {
 
         // Retry loop for current chunk
         while (attempts < 3 && !success) {
+          if (isCancelledRef.current) throw new Error('Upload cancelled');
+
           try {
             await new Promise<void>((resolve, reject) => {
               const xhr = new XMLHttpRequest();
+              activeXhrRef.current = xhr; // Store ref
+
               xhr.open('PUT', uploadUrl);
               xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${totalSize}`);
 
@@ -280,7 +330,11 @@ export default function ProjectDetailPage() {
               xhr.send(chunk);
             });
             success = true;
-          } catch (error) {
+          } catch (error: any) {
+            if (isCancelledRef.current || error.message === 'Upload aborted') {
+              throw new Error('Upload cancelled');
+            }
+
             // Warning suppressed to avoid alarming user during successful recovery
             console.log(`Chunk retry ${attempts + 1}/3 failed:`, error);
             attempts++;
@@ -306,6 +360,8 @@ export default function ProjectDetailPage() {
         start = end;
       }
 
+      if (isCancelledRef.current) throw new Error('Upload cancelled');
+
       // 3. Finalize Upload
       console.log('Finalizing upload, fileId:', fileId);
 
@@ -327,12 +383,20 @@ export default function ProjectDetailPage() {
 
       success('File Uploaded', `${file.name} has been uploaded successfully`);
       fetchProject();
-    } catch (error) {
-      console.error('Upload flow error:', error);
-      showError('Upload Failed', error instanceof Error ? error.message : 'Unknown error');
+    } catch (error: any) {
+      if (error.message === 'Upload cancelled') {
+        // Handled in handleCancelUpload usually, but just in case
+        console.log('Upload cancelled caught');
+      } else {
+        console.error('Upload flow error:', error);
+        showError('Upload Failed', error instanceof Error ? error.message : 'Unknown error');
+      }
     } finally {
-      setUploadProgress(undefined);
-      setUploadDetails(undefined);
+      if (!isCancelledRef.current) {
+        setUploadProgress(undefined);
+        setUploadDetails(undefined);
+        activeXhrRef.current = null;
+      }
     }
   }
 
@@ -397,7 +461,7 @@ export default function ProjectDetailPage() {
     }
   }
 
-  async function copyShareLink() {
+  async function handleCopyShareLink() {
     if (!project) return;
     try {
       await navigator.clipboard.writeText(project.shareUrl);
@@ -427,7 +491,7 @@ export default function ProjectDetailPage() {
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={project.status} size="lg" />
 
-            <Button variant="secondary" onClick={copyShareLink}>
+            <Button variant="secondary" onClick={handleCopyShareLink}>
               <span className="inline-flex items-center gap-2">
                 <Copy className="h-4 w-4" aria-hidden="true" />
                 Copy share link
@@ -457,6 +521,7 @@ export default function ProjectDetailPage() {
                 <div className="mb-5">
                   <FileUpload
                     onUpload={handleUpload}
+                    onCancel={handleCancelUpload}
                     accept="*"
                     maxSize={maxFileSize}
                     hint={`Max ${maxFileSizeLabel}. Images, PDFs, documents, videos, and archives.`}
