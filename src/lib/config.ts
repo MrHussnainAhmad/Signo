@@ -59,7 +59,7 @@ export const config = {
 
   // Email
   email: {
-    from: process.env.EMAIL_FROM || `${APP_NAME} <noreply@sendwork.com>`,
+    from: process.env.EMAIL_FROM || `${APP_NAME} <mrhussnainahmad@gmail.com>`,
     smtp: {
       host: process.env.SMTP_HOST!,
       port: parseInt(process.env.SMTP_PORT || "587"),

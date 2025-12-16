@@ -10,6 +10,7 @@ import {
   Files,
   Shield,
   Clock,
+  ListChecks
 } from 'lucide-react';
 
 const bento = [
@@ -48,12 +49,19 @@ const bento = [
       'Know when clients comment, approve, or request changes—no manual checking.',
     className: 'md:col-span-1',
   },
+    {
+    icon: ListChecks,
+    title: 'Simple status tracking',
+    description:
+      'You instantly see whether a project is waiting, in revision, or approved—no guessing, no follow-ups.',
+    className: 'md:col-span-1',
+  },
   {
     icon: Shield,
     title: 'Secure hosting',
     description:
       'Files are stored in SendWork storage for sharing and approvals. Ownership remains yours.',
-    className: 'md:col-span-1',
+    className: 'md:col-span-2',
   },
 ];
 
