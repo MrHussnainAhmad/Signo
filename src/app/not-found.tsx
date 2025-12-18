@@ -41,7 +41,7 @@ export default function NotFound() {
         </div>
         <p className="mt-8 text-sm text-gray-500">
           Need help?{' '}
-          <a href="mailto:support@sendwork.com" className="text-indigo-600 hover:text-indigo-700">
+          <a href="mailto:support@fileok.com" className="text-indigo-600 hover:text-indigo-700">
             Contact support
           </a>
         </p>

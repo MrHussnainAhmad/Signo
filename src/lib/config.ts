@@ -1,11 +1,11 @@
-export const APP_NAME = "SendWork";
+export const APP_NAME = "FileOk";
 
 export const config = {
   appName: APP_NAME,
   appUrl: process.env.APP_URL || "https://signo-hypo.vercel.app",
 
   // Session
-  sessionCookieName: process.env.SESSION_COOKIE_NAME || "sendwork_session",
+  sessionCookieName: process.env.SESSION_COOKIE_NAME || "fileok_session",
   jwtSecret: process.env.JWT_SECRET!,
 
   // Token expiry times

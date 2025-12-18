@@ -121,7 +121,7 @@ export default function TermsPage() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Contact</h2>
             <p className="text-gray-600">
               Questions about these Terms? Contact{' '}
-              <a href="mailto:legal@sendwork.com">legal@sendwork.com</a>.
+              <a href="mailto:legal@fileok.com">legal@fileok.com</a>.
             </p>
           </section>
         </div>

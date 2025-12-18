@@ -131,7 +131,7 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">8. Contact Us</h2>
             <p className="text-gray-600">
               If you have any questions about this Privacy Policy, contact us at{' '}
-              <a href="mailto:privacy@sendwork.com">privacy@sendwork.com</a>.
+              <a href="mailto:privacy@fileok.com">privacy@fileok.com</a>.
             </p>
           </section>
         </div>
